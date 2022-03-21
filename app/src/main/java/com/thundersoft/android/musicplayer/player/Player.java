@@ -12,6 +12,7 @@ public class Player {
     private static final ListIterator<Track> playListIterator = playList.listIterator();
     private static Track currentTrack;
     private static int currentTrackIndex;
+    private static boolean playing;
 
     public static void previous() {
         currentTrack = playListIterator.previous();
@@ -56,11 +57,23 @@ public class Player {
         currentMode = modes[currentModeIndex];
     }
 
+    public static void setPlaying(boolean playing) {
+        Player.playing = playing;
+    }
+
+    public static Track getCurrentTrack() {
+        return currentTrack;
+    }
+
     public static PlayMode getCurrentMode() {
         return currentMode;
     }
 
     public static List<Track> getPlayList() {
         return playList;
+    }
+
+    public static boolean isPlaying() {
+        return playing;
     }
 }

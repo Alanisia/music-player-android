@@ -1,0 +1,7 @@
+package com.thundersoft.android.musicplayer.util;
+
+public final class Constants {
+    public static final String TRACK_TITLE = "TRACK_TITLE";
+    public static final String TRACK_ARTIST = "TRACK_ARTIST";
+    public static final String TRACK_DURATION = "TRACK_DURATION";
+}
