@@ -3,77 +3,129 @@ package com.thundersoft.android.musicplayer.player;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.ListIterator;
+import java.util.Random;
+import java.util.stream.IntStream;
 
 public class Player {
-    private static final PlayMode[] modes = {PlayMode.SEQUENCE, PlayMode.SINGLE, PlayMode.SHUFFLE};
-    private static PlayMode currentMode;
-    private static int currentModeIndex;
-    private static final List<Track> playList = new LinkedList<>();
-    private static final ListIterator<Track> playListIterator = playList.listIterator();
-    private static Track currentTrack;
-    private static int currentTrackIndex;
-    private static boolean playing;
+    private static final Player player = new Player();
 
-    public static void previous() {
-        currentTrack = playListIterator.previous();
+    private final PlayMode[] modes = {PlayMode.SEQUENCE, PlayMode.SINGLE, PlayMode.SHUFFLE};
+    private int currentModeIndex;
+    private PlayMode currentMode = modes[currentModeIndex];
+
+    private final List<Track> playList = new LinkedList<>();
+    private Track currentTrack;
+    private int currentTrackIndex;
+
+    private boolean playing;
+
+    private Player() {
     }
 
-    public static void next() {
-        currentTrack = playListIterator.next();
+    public static Player getInstance() {
+        return player;
     }
 
-    public static Track get(int index) {
+    public void previous() {
+        ListIterator<Track> it = playList.listIterator(currentTrackIndex);
+        currentTrack = it.previous();
+        currentTrackIndex = (currentTrackIndex - 1) % playList.size();
+    }
+
+    public void next() {
+        ListIterator<Track> it = playList.listIterator(currentTrackIndex);
+        currentTrack = it.next();
+        currentTrackIndex = (currentTrackIndex + 1) % playList.size();
+    }
+
+    public Track get(int index) {
         if (index == currentTrackIndex)
             return currentTrack;
-        while (currentTrackIndex < index) {
-            currentTrack = playListIterator.next();
-            currentTrackIndex++;
-        }
-        while (currentTrackIndex > index) {
-            currentTrack = playListIterator.previous();
-            currentTrackIndex--;
-        }
+        currentTrack = playList.get(index);
+        currentTrackIndex = index;
         return currentTrack;
     }
 
-    public static void addNext(Track track) {
+    public void addNext(Track track) {
         if (!track.equals(currentTrack)) {
-            playList.remove(track);
-            playListIterator.add(track);
+            if (!playList.remove(track)) {
+                ListIterator<Track> it = playList.listIterator(currentTrackIndex);
+                it.add(track);
+            } else {
+
+            }
+
         }
     }
 
-    // TODO
-    public static void remove(Track track) {
+    /**
+     * TODO
+     * The track, which will be removed but now playing, should be stopped before deletion.
+     * If it is the playing track, the system should select next track under current mode,
+     * otherwise there is no influence and we can continue playing the current track.
+     * Maybe index of current track will be changed after deletion...
+     * @param track the track will be removed
+     */
+    public void remove(Track track) {
         if (track.equals(currentTrack)) {
-            playListIterator.remove();
-//            currentTrack =
+            // playListIterator.remove();
+            nextOverPlaying();
         }
         playList.remove(track);
     }
 
-    public static void changeMode() {
+    public void nextOverPlaying() {
+        switch (currentMode) {
+            case SEQUENCE:
+                next();
+                break;
+            case SHUFFLE:
+                Random random = new Random();
+                random.setSeed(System.currentTimeMillis());
+                int r = random.nextInt(playList.size());
+                boolean forward = random.nextBoolean();
+                while (r > 0) {
+                    if (forward) next();
+                    else previous();
+                    r--;
+                }
+                break;
+            default:
+                break;
+        }
+    }
+
+    public Track current() {
+        return currentTrack;
+    }
+
+    public Player setCurrent(int index) {
+        this.currentTrack = get(index);
+        return this;
+    }
+
+    public boolean playing() {
+        return playing;
+    }
+
+    public void changeMode() {
         currentModeIndex = (currentModeIndex + 1) % modes.length;
         currentMode = modes[currentModeIndex];
     }
 
-    public static void setPlaying(boolean playing) {
-        Player.playing = playing;
+    public void setPlaying(boolean playing) {
+        this.playing = playing;
     }
 
-    public static Track getCurrentTrack() {
+    public Track getCurrentTrack() {
         return currentTrack;
     }
 
-    public static PlayMode getCurrentMode() {
+    public PlayMode getCurrentMode() {
         return currentMode;
     }
 
-    public static List<Track> getPlayList() {
+    public List<Track> getPlayList() {
         return playList;
-    }
-
-    public static boolean isPlaying() {
-        return playing;
     }
 }

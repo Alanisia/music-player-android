@@ -21,21 +21,23 @@ import com.thundersoft.android.musicplayer.player.Track;
 import java.util.List;
 
 public class PlayListFragment extends Fragment {
+    private final Player player = Player.getInstance();
+
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container,
                              @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_play_list, container, false);
         ListView listView = view.findViewById(R.id.play_list_view);
-        listView.setAdapter(new PlayListAdaptor(getContext(), R.layout.layout_play_list_item, Player.getPlayList())
-                .setPlayList(Player.getPlayList()));
+        listView.setAdapter(new PlayListAdaptor(getContext(), R.layout.layout_play_list_item, player.getPlayList())
+                .setPlayList(player.getPlayList()));
         listView.setOnItemClickListener(((parent, view1, position, id) -> {
 
         }));
         return view;
     }
 
-    static class PlayListAdaptor extends ArrayAdapter<Track> {
+    private class PlayListAdaptor extends ArrayAdapter<Track> {
         private final int resourceId;
         private List<Track> playList;
 
@@ -57,7 +59,7 @@ public class PlayListFragment extends Fragment {
             viewHolder.itemTitle.setText(track.getTitle());
             viewHolder.itemArtist.setText(track.getArtist());
             viewHolder.remove.setOnClickListener(v -> {
-                Player.remove(track);
+                player.remove(track);
                 notifyDataSetChanged();
             });
             return convertView;
@@ -68,7 +70,7 @@ public class PlayListFragment extends Fragment {
             return this;
         }
 
-        static class ViewHolder {
+        private class ViewHolder {
             TextView itemTitle;
             TextView itemArtist;
             ImageButton remove;

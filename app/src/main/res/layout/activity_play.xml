@@ -19,11 +19,19 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
-    <TextView
+    <com.thundersoft.android.musicplayer.component.MarqueeTextView
         android:id="@+id/play_title"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:textSize="24sp"
+
+        android:singleLine="true"
+        android:scrollHorizontally="true"
+        android:ellipsize="marquee"
+        android:focusable="true"
+        android:focusableInTouchMode="true"
+        android:marqueeRepeatLimit="marquee_forever"
+
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/album_image" />
@@ -41,17 +49,16 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginVertical="10dp"
-        android:layout_marginEnd="10dp"
         android:text="00:00"
         app:layout_constraintBottom_toTopOf="@+id/play_mode"
         app:layout_constraintStart_toStartOf="parent" />
 
     <SeekBar
         android:id="@+id/time_bar"
-        android:layout_width="match_parent"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_margin="10dp"
-        android:layout_marginHorizontal="10dp"
+        app:layout_constraintHorizontal_weight="1"
         app:layout_constraintBottom_toTopOf="@+id/play_or_pause"
         app:layout_constraintEnd_toStartOf="@+id/duration"
         app:layout_constraintStart_toEndOf="@+id/current_time" />
@@ -61,7 +68,6 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginVertical="10dp"
-        android:layout_marginStart="10dp"
         android:text="00:00"
         app:layout_constraintBottom_toTopOf="@+id/play_list"
         app:layout_constraintEnd_toEndOf="parent" />

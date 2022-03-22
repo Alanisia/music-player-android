@@ -1,6 +1,7 @@
 package com.thundersoft.android.musicplayer.player;
 
 import android.graphics.Bitmap;
+import android.net.Uri;
 
 import java.util.Objects;
 
@@ -8,7 +9,7 @@ public class Track {
     private String title;
     private String artist;
     private String duration;
-    private String path;
+    private Uri path;
     private Bitmap image;
     private int minutes;
     private int seconds;
@@ -40,11 +41,11 @@ public class Track {
         return this;
     }
 
-    public String getPath() {
+    public Uri getPath() {
         return path;
     }
 
-    public Track setPath(String path) {
+    public Track setPath(Uri path) {
         this.path = path;
         return this;
     }

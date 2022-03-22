@@ -6,20 +6,18 @@ import android.media.AudioAttributes;
 import android.media.MediaPlayer;
 import android.os.Binder;
 import android.os.IBinder;
-import android.util.Log;
 import android.widget.Toast;
 
 import androidx.annotation.Nullable;
 
-import com.thundersoft.android.musicplayer.player.PlayMode;
 import com.thundersoft.android.musicplayer.player.Player;
 import com.thundersoft.android.musicplayer.player.Track;
-
-import java.io.IOException;
+import com.thundersoft.android.musicplayer.util.Constants;
 
 public class PlayerService extends Service {
-    private static final String TAG = "PlayerService";
+    private static final String TAG = PlayerService.class.getSimpleName();
     private MediaPlayer mediaPlayer;
+    private Player player;
 
     @Nullable
     @Override
@@ -50,50 +48,42 @@ public class PlayerService extends Service {
                         Builder().setContentType(AudioAttributes.CONTENT_TYPE_MUSIC).build());
             } else reset();
 
-            // todo
-            Track track = Player.getCurrentTrack();
-
-            try {
-                mediaPlayer.setDataSource(track.getPath());
-            } catch (IOException e) {
-//                Log.e(TAG, "play: " + );
-                e.printStackTrace();
-            }
+            Track track = player.current();
+            // TODO: set data source
 
             mediaPlayer.prepareAsync();
-            mediaPlayer.setOnPreparedListener(p -> {
-                p.start();
-                Player.setPlaying(true);
-            });
+            mediaPlayer.setOnPreparedListener(MediaPlayer::start);
+            mediaPlayer.setOnCompletionListener(p -> sendBroadcast(new Intent(Constants.ACTION_PLAY_COMPLETE)));
             mediaPlayer.setOnErrorListener((p, what, extra) -> {
                 Toast.makeText(PlayerService.this, "Error occurred!", Toast.LENGTH_SHORT).show();
                 return true;
             });
-            mediaPlayer.setOnCompletionListener(p -> {
-                if (!mediaPlayer.isLooping()) Player.setPlaying(false);
-
-            });
-
         }
 
-        public void control() {
+        public boolean control() {
             if (mediaPlayer != null) {
                 if (mediaPlayer.isPlaying()) {
                     mediaPlayer.pause();
-                    Player.setPlaying(false);
+                    return false;
                 } else {
                     mediaPlayer.start();
-                    Player.setPlaying(true);
+                    return true;
                 }
+            } else {
+                play();
+                return true;
             }
         }
 
-        public void next() {
-            Player.next();
+        public void next(boolean over) {
+            if (over) player.nextOverPlaying();
+            else player.next();
+            play();
         }
 
         public void previous() {
-            Player.previous();
+            player.previous();
+            play();
         }
 
         public void reset() {
@@ -101,6 +91,10 @@ public class PlayerService extends Service {
                 mediaPlayer.stop();
                 mediaPlayer.reset();
             }
+        }
+
+        public MediaPlayer getMediaPlayer() {
+            return mediaPlayer;
         }
     }
 }

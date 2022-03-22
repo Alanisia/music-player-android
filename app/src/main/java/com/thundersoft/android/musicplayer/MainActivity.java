@@ -12,9 +12,11 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
@@ -25,9 +27,10 @@ import com.thundersoft.android.musicplayer.util.Constants;
 
 import java.util.List;
 
-public class MainActivity extends AppCompatActivity {
-    private static final String TAG = "MainActivity";
+public class MainActivity extends AppCompatActivity implements AdapterView.OnItemClickListener {
+    private static final String TAG = MainActivity.class.getSimpleName();
     private static final int REQUEST_PERMISSION_CODE = 1;
+    private List<Track> tracks;
 
     static class TrackListAdaptor extends ArrayAdapter<Track> {
         private List<Track> tracks;
@@ -87,17 +90,27 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    @Override
+    public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+        Track track = tracks.get(position);
+        Log.d(TAG, "mainLogic: " + track);
+        Intent intent = new Intent(this, PlayActivity.class);
+        intent.putExtra(Constants.TRACK_TITLE, track.getTitle());
+        intent.putExtra(Constants.TRACK_ARTIST, track.getArtist());
+        intent.putExtra(Constants.TRACK_DURATION, track.getDuration());
+        startActivity(intent);
+    }
+
     private void mainLogic() {
-        List<Track> tracks = TrackInfoReader.read(this);
+        tracks = TrackInfoReader.read(this);
         ListView trackListView = findViewById(R.id.track_list);
         trackListView.setAdapter(new TrackListAdaptor(this, R.layout.layout_track_item, tracks).setTracks(tracks));
-        trackListView.setOnItemClickListener((parent, view, position, id) -> {
-            Track track = tracks.get(position);
-            Intent intent = new Intent(this, PlayActivity.class);
-            intent.putExtra(Constants.TRACK_TITLE, track.getTitle());
-            intent.putExtra(Constants.TRACK_ARTIST, track.getArtist());
-            intent.putExtra(Constants.TRACK_DURATION, track.getDuration());
-            startActivity(intent);
-        });
+        trackListView.setOnItemClickListener(this);
+    }
+
+    @Override
+    public boolean onKeyDown(int keyCode, KeyEvent event) {
+        System.exit(0);
+        return false;
     }
 }
