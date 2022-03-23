@@ -2,16 +2,15 @@ package com.thundersoft.android.musicplayer;
 
 import android.annotation.SuppressLint;
 import android.content.BroadcastReceiver;
-import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.content.ServiceConnection;
+import android.media.MediaPlayer;
 import android.os.Bundle;
 import android.os.Handler;
-import android.os.IBinder;
 import android.os.Looper;
 import android.util.Log;
+import android.view.KeyEvent;
 import android.view.View;
 import android.widget.ImageButton;
 import android.widget.ImageView;
@@ -22,25 +21,22 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import com.thundersoft.android.musicplayer.player.PlayMode;
 import com.thundersoft.android.musicplayer.player.Player;
-import com.thundersoft.android.musicplayer.player.Track;
 import com.thundersoft.android.musicplayer.service.PlayerService;
 import com.thundersoft.android.musicplayer.service.PlayerServiceConnection;
-import com.thundersoft.android.musicplayer.service.SIPlayerServiceConnection;
 import com.thundersoft.android.musicplayer.util.Constants;
 import com.thundersoft.android.musicplayer.util.Utils;
 
+import java.util.Objects;
 import java.util.Timer;
 import java.util.TimerTask;
-import java.util.concurrent.FutureTask;
 
 public class PlayActivity extends AppCompatActivity implements View.OnClickListener {
     private static final String TAG = PlayActivity.class.getSimpleName();
     private final ViewHolder viewHolder = new ViewHolder();
+    private final PlayerServiceConnection serviceConnection = PlayerServiceConnection.getInstance();
     private final Player player = Player.getInstance();
     private final Handler handler = new Handler(Looper.getMainLooper());
     private PlayerBroadcastReceiver receiver;
-
-    private final SIPlayerServiceConnection serviceConnection = SIPlayerServiceConnection.getInstance();
     private int currentTime = 0;
 
     // false when is not playing and touching seek bar
@@ -52,10 +48,6 @@ public class PlayActivity extends AppCompatActivity implements View.OnClickListe
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_play);
-
-        // bind service
-//        serviceConnection = new PlayerServiceConnection().setContext(getApplication());
-//        Utils.bindService(getApplication(), PlayerService.class, serviceConnection);
 
         // get views
         viewHolder.albumImage = findViewById(R.id.album_image);
@@ -116,6 +108,8 @@ public class PlayActivity extends AppCompatActivity implements View.OnClickListe
         super.onStart();
 
         // set timer
+        MediaPlayer mediaPlayer = serviceConnection.getBinder().getMediaPlayer();
+        currentTime = mediaPlayer != null ? mediaPlayer.getCurrentPosition() / 1000 : 0;
         setTimer();
         if (player.playing()) {
             timing = true;
@@ -142,8 +136,13 @@ public class PlayActivity extends AppCompatActivity implements View.OnClickListe
 
     @Override
     protected void onDestroy() {
-//        unbindService(serviceConnection);
         super.onDestroy();
+    }
+
+    @Override
+    public boolean onKeyDown(int keyCode, KeyEvent event) {
+        if (keyCode == KeyEvent.KEYCODE_BACK) setResult(Constants.PLAYER_RETURN_RESULT);
+        return super.onKeyDown(keyCode, event);
     }
 
     @SuppressLint("NonConstantResourceId")

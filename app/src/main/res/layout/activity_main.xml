@@ -10,8 +10,11 @@
 
     <EditText
         android:id="@+id/search_track"
+        android:hint="输入搜索关键词"
+        android:inputType="text"
         android:layout_width="match_parent"
-        android:layout_height="30dp"/>
+        android:layout_marginTop="10dp"
+        android:layout_height="40dp"/>
 
     <ListView
         android:id="@+id/track_list"
@@ -20,6 +23,7 @@
         android:layout_height="0dp"/>
 
     <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/playing_bottom_nav"
         android:layout_width="match_parent"
         android:layout_height="60dp">
 
