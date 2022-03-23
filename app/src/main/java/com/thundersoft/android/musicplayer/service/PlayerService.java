@@ -1,6 +1,7 @@
 package com.thundersoft.android.musicplayer.service;
 
 import android.app.Service;
+import android.content.Context;
 import android.content.Intent;
 import android.media.AudioAttributes;
 import android.media.MediaPlayer;
@@ -14,10 +15,12 @@ import com.thundersoft.android.musicplayer.player.Player;
 import com.thundersoft.android.musicplayer.player.Track;
 import com.thundersoft.android.musicplayer.util.Constants;
 
+import java.io.IOException;
+
 public class PlayerService extends Service {
     private static final String TAG = PlayerService.class.getSimpleName();
+    private final Player player = Player.getInstance();
     private MediaPlayer mediaPlayer;
-    private Player player;
 
     @Nullable
     @Override
@@ -41,6 +44,8 @@ public class PlayerService extends Service {
     }
 
     public class PlayerBinder extends Binder {
+        private Context context;
+
         public void play() {
             if (mediaPlayer == null) {
                 mediaPlayer = new MediaPlayer();
@@ -48,14 +53,18 @@ public class PlayerService extends Service {
                         Builder().setContentType(AudioAttributes.CONTENT_TYPE_MUSIC).build());
             } else reset();
 
-            Track track = player.current();
-            // TODO: set data source
+            try {
+                Track track = player.current();
+                mediaPlayer.setDataSource(context, track.getPath());
+                mediaPlayer.prepareAsync();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
 
-            mediaPlayer.prepareAsync();
             mediaPlayer.setOnPreparedListener(MediaPlayer::start);
             mediaPlayer.setOnCompletionListener(p -> sendBroadcast(new Intent(Constants.ACTION_PLAY_COMPLETE)));
             mediaPlayer.setOnErrorListener((p, what, extra) -> {
-                Toast.makeText(PlayerService.this, "Error occurred!", Toast.LENGTH_SHORT).show();
+                Toast.makeText(context, "Error occurred!", Toast.LENGTH_SHORT).show();
                 return true;
             });
         }
@@ -64,13 +73,16 @@ public class PlayerService extends Service {
             if (mediaPlayer != null) {
                 if (mediaPlayer.isPlaying()) {
                     mediaPlayer.pause();
+                    player.setPlaying(false);
                     return false;
                 } else {
                     mediaPlayer.start();
+                    player.setPlaying(true);
                     return true;
                 }
             } else {
                 play();
+                player.setPlaying(true);
                 return true;
             }
         }
@@ -79,11 +91,13 @@ public class PlayerService extends Service {
             if (over) player.nextOverPlaying();
             else player.next();
             play();
+            player.setPlaying(true);
         }
 
         public void previous() {
             player.previous();
             play();
+            player.setPlaying(true);
         }
 
         public void reset() {
@@ -91,6 +105,11 @@ public class PlayerService extends Service {
                 mediaPlayer.stop();
                 mediaPlayer.reset();
             }
+        }
+
+        public PlayerBinder setContext(Context context) {
+            this.context = context;
+            return this;
         }
 
         public MediaPlayer getMediaPlayer() {

@@ -21,15 +21,22 @@ import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
 
+import com.thundersoft.android.musicplayer.player.Player;
 import com.thundersoft.android.musicplayer.player.Track;
 import com.thundersoft.android.musicplayer.player.TrackInfoReader;
+import com.thundersoft.android.musicplayer.service.PlayerService;
+import com.thundersoft.android.musicplayer.service.PlayerServiceConnection;
+import com.thundersoft.android.musicplayer.service.SIPlayerServiceConnection;
 import com.thundersoft.android.musicplayer.util.Constants;
+import com.thundersoft.android.musicplayer.util.Utils;
 
 import java.util.List;
 
 public class MainActivity extends AppCompatActivity implements AdapterView.OnItemClickListener {
     private static final String TAG = MainActivity.class.getSimpleName();
     private static final int REQUEST_PERMISSION_CODE = 1;
+    private final Player player = Player.getInstance();
+    private SIPlayerServiceConnection serviceConnection;
     private List<Track> tracks;
 
     static class TrackListAdaptor extends ArrayAdapter<Track> {
@@ -74,6 +81,12 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        // bind service
+        // serviceConnection = new PlayerServiceConnection().setContext(getApplication());
+        serviceConnection = SIPlayerServiceConnection.getInstance();
+        serviceConnection.setContext(getApplication());
+        Utils.bindService(getApplication(), PlayerService.class, serviceConnection);
+
         int hasReadStoragePermission = ContextCompat.checkSelfPermission(getApplication(), Manifest.permission.READ_EXTERNAL_STORAGE);
         if (hasReadStoragePermission != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(this, new String[]{
@@ -92,8 +105,10 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
 
     @Override
     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+        player.setPlayList(tracks);
+        player.setCurrent(position);
         Track track = tracks.get(position);
-        Log.d(TAG, "mainLogic: " + track);
+        Log.d(TAG, "onItemClick: " + track);
         Intent intent = new Intent(this, PlayActivity.class);
         intent.putExtra(Constants.TRACK_TITLE, track.getTitle());
         intent.putExtra(Constants.TRACK_ARTIST, track.getArtist());
@@ -112,5 +127,11 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
     public boolean onKeyDown(int keyCode, KeyEvent event) {
         System.exit(0);
         return false;
+    }
+
+    @Override
+    protected void onDestroy() {
+        unbindService(serviceConnection);
+        super.onDestroy();
     }
 }

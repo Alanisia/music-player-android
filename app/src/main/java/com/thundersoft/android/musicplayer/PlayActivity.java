@@ -11,6 +11,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Looper;
+import android.util.Log;
 import android.view.View;
 import android.widget.ImageButton;
 import android.widget.ImageView;
@@ -23,11 +24,14 @@ import com.thundersoft.android.musicplayer.player.PlayMode;
 import com.thundersoft.android.musicplayer.player.Player;
 import com.thundersoft.android.musicplayer.player.Track;
 import com.thundersoft.android.musicplayer.service.PlayerService;
+import com.thundersoft.android.musicplayer.service.PlayerServiceConnection;
+import com.thundersoft.android.musicplayer.service.SIPlayerServiceConnection;
 import com.thundersoft.android.musicplayer.util.Constants;
 import com.thundersoft.android.musicplayer.util.Utils;
 
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.concurrent.FutureTask;
 
 public class PlayActivity extends AppCompatActivity implements View.OnClickListener {
     private static final String TAG = PlayActivity.class.getSimpleName();
@@ -36,8 +40,7 @@ public class PlayActivity extends AppCompatActivity implements View.OnClickListe
     private final Handler handler = new Handler(Looper.getMainLooper());
     private PlayerBroadcastReceiver receiver;
 
-    private ServiceConnection serviceConnection;
-    private PlayerService.PlayerBinder binder;
+    private final SIPlayerServiceConnection serviceConnection = SIPlayerServiceConnection.getInstance();
     private int currentTime = 0;
 
     // false when is not playing and touching seek bar
@@ -51,9 +54,8 @@ public class PlayActivity extends AppCompatActivity implements View.OnClickListe
         setContentView(R.layout.activity_play);
 
         // bind service
-        serviceConnection = new PlayerServiceConnection();
-        Intent serviceIntent = new Intent(this, PlayerService.class);
-        bindService(serviceIntent, serviceConnection, BIND_AUTO_CREATE);
+//        serviceConnection = new PlayerServiceConnection().setContext(getApplication());
+//        Utils.bindService(getApplication(), PlayerService.class, serviceConnection);
 
         // get views
         viewHolder.albumImage = findViewById(R.id.album_image);
@@ -64,6 +66,16 @@ public class PlayActivity extends AppCompatActivity implements View.OnClickListe
         viewHolder.timeBar = findViewById(R.id.time_bar);
         viewHolder.playMode = findViewById(R.id.play_mode);
         viewHolder.playOrPause = findViewById(R.id.play_or_pause);
+        viewHolder.previousTrack = findViewById(R.id.previous_track);
+        viewHolder.nextTrack = findViewById(R.id.next_track);
+        viewHolder.playList = findViewById(R.id.play_list);
+
+        viewHolder.albumImage.setOnClickListener(this);
+        viewHolder.playMode.setOnClickListener(this);
+        viewHolder.playOrPause.setOnClickListener(this);
+        viewHolder.previousTrack.setOnClickListener(this);
+        viewHolder.nextTrack.setOnClickListener(this);
+        viewHolder.playList.setOnClickListener(this);
 
         setModeImageResource();
 
@@ -86,18 +98,24 @@ public class PlayActivity extends AppCompatActivity implements View.OnClickListe
 
             @Override
             public void onStopTrackingTouch(SeekBar seekBar) {
+                PlayerService.PlayerBinder binder = serviceConnection.getBinder();
+                currentTime = seekBar.getProgress();
+                binder.getMediaPlayer().seekTo(currentTime * 1000);
+                viewHolder.currentTime.setText(Utils.getProgress(currentTime));
                 if (player.playing()) {
-                    currentTime = seekBar.getProgress();
-                    binder.getMediaPlayer().seekTo(currentTime * 1000);
-                    viewHolder.currentTime.setText(Utils.getProgress(currentTime));
-
                     // start timing
                     timing = true;
                     setTimer();
                 }
             }
         });
+    }
 
+    @Override
+    protected void onStart() {
+        super.onStart();
+
+        // set timer
         setTimer();
         if (player.playing()) {
             timing = true;
@@ -124,7 +142,7 @@ public class PlayActivity extends AppCompatActivity implements View.OnClickListe
 
     @Override
     protected void onDestroy() {
-        unbindService(serviceConnection);
+//        unbindService(serviceConnection);
         super.onDestroy();
     }
 
@@ -134,14 +152,19 @@ public class PlayActivity extends AppCompatActivity implements View.OnClickListe
         switch (v.getId()) {
             case R.id.album_image:
                 Intent intent = new Intent(this, AlbumPictureActivity.class);
+                intent.putExtra(Constants.ALBUM_ART, new byte[1024]); // TODO
+                startActivity(intent);
                 break;
             case R.id.play_mode:
+                Log.d(TAG, "onClick: change mode");
                 changeMode();
                 break;
             case R.id.previous_track:
+                Log.d(TAG, "onClick: previous track");
                 previous();
                 break;
             case R.id.next_track:
+                Log.d(TAG, "onClick: next track");
                 next(false);
                 break;
             case R.id.play_list:
@@ -153,26 +176,34 @@ public class PlayActivity extends AppCompatActivity implements View.OnClickListe
                 // TODO
                 break;
             case R.id.play_or_pause:
+                Log.d(TAG, "onClick: play or pause");
                 control();
                 break;
             default: break;
         }
     }
 
-    private void previous() {
-        binder.previous();
+    private void reInitPlayer() {
         currentTime = 0;
+        viewHolder.title.setText(player.current().getTitle());
+        viewHolder.artist.setText(player.current().getArtist());
+        viewHolder.duration.setText(player.current().getDuration());
         viewHolder.timeBar.setProgress(currentTime);
         timing = true;
         setTimer();
+        viewHolder.playOrPause.setImageResource(R.drawable.ic_baseline_pause_circle_outline_24);
+    }
+
+    private void previous() {
+        PlayerService.PlayerBinder binder = serviceConnection.getBinder();
+        binder.previous();
+        reInitPlayer();
     }
 
     private void next(boolean over) {
+        PlayerService.PlayerBinder binder = serviceConnection.getBinder();
         binder.next(over);
-        currentTime = 0;
-        viewHolder.timeBar.setProgress(currentTime);
-        timing = true;
-        setTimer();
+        reInitPlayer();
     }
 
     private void changeMode() {
@@ -181,6 +212,7 @@ public class PlayActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     private void control() {
+        PlayerService.PlayerBinder binder = serviceConnection.getBinder();
         if (binder.control()) {
             viewHolder.playOrPause.setImageResource(R.drawable.ic_baseline_pause_circle_outline_24);
             timing = true;
@@ -227,26 +259,14 @@ public class PlayActivity extends AppCompatActivity implements View.OnClickListe
         TextView title, artist;
         TextView currentTime, duration;
         SeekBar timeBar;
-        ImageButton playMode, playOrPause;
-    }
-
-    private class PlayerServiceConnection implements ServiceConnection {
-        @Override
-        public void onServiceConnected(ComponentName name, IBinder service) {
-            binder = (PlayerService.PlayerBinder) service;
-        }
-
-        @Override
-        public void onServiceDisconnected(ComponentName name) {
-        }
+        ImageButton playMode, playOrPause, previousTrack, nextTrack, playList;
     }
 
     private class PlayerBroadcastReceiver extends BroadcastReceiver {
         @Override
         public void onReceive(Context context, Intent intent) {
-            if (intent.getAction().equals(Constants.ACTION_PLAY_COMPLETE)) {
+            if (intent.getAction().equals(Constants.ACTION_PLAY_COMPLETE))
                 next(true);
-            }
         }
     }
 }

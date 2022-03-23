@@ -1,5 +1,7 @@
 package com.thundersoft.android.musicplayer.player;
 
+import android.util.Log;
+
 import java.util.LinkedList;
 import java.util.List;
 import java.util.ListIterator;
@@ -7,6 +9,7 @@ import java.util.Random;
 import java.util.stream.IntStream;
 
 public class Player {
+    private static final String TAG = Player.class.getSimpleName();
     private static final Player player = new Player();
 
     private final PlayMode[] modes = {PlayMode.SEQUENCE, PlayMode.SINGLE, PlayMode.SHUFFLE};
@@ -15,7 +18,7 @@ public class Player {
 
     private final List<Track> playList = new LinkedList<>();
     private Track currentTrack;
-    private int currentTrackIndex;
+    private int currentTrackIndex = -1;
 
     private boolean playing;
 
@@ -28,13 +31,17 @@ public class Player {
 
     public void previous() {
         ListIterator<Track> it = playList.listIterator(currentTrackIndex);
+        it.previous();
         currentTrack = it.previous();
+        Log.d(TAG, "previous: " + currentTrack);
         currentTrackIndex = (currentTrackIndex - 1) % playList.size();
     }
 
     public void next() {
         ListIterator<Track> it = playList.listIterator(currentTrackIndex);
+        it.next();
         currentTrack = it.next();
+        Log.d(TAG, "next: " + currentTrack);
         currentTrackIndex = (currentTrackIndex + 1) % playList.size();
     }
 
@@ -46,6 +53,7 @@ public class Player {
         return currentTrack;
     }
 
+    // TODO
     public void addNext(Track track) {
         if (!track.equals(currentTrack)) {
             if (!playList.remove(track)) {
@@ -99,9 +107,12 @@ public class Player {
         return currentTrack;
     }
 
-    public Player setCurrent(int index) {
+    public void setCurrent(int index) {
         this.currentTrack = get(index);
-        return this;
+    }
+
+    public void setPlayList(List<Track> tracks) {
+        playList.addAll(tracks);
     }
 
     public boolean playing() {
