@@ -6,12 +6,20 @@
     android:descendantFocusability="blocksDescendants"
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
+    <ImageView
+        android:id="@+id/track_image"
+        android:src="@drawable/album"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        android:layout_width="48dp"
+        android:layout_height="48dp"/>
+
     <com.thundersoft.android.musicplayer.component.MarqueeTextView
         android:id="@+id/track_title"
         android:textSize="20sp"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintEnd_toStartOf="@+id/track_duration"
-        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintStart_toEndOf="@+id/track_image"
 
         android:singleLine="true"
         android:scrollHorizontally="true"
@@ -32,7 +40,7 @@
 
     <TextView
         android:id="@+id/track_artist"
-        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintStart_toEndOf="@+id/track_image"
         app:layout_constraintTop_toBottomOf="@id/track_title"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"/>

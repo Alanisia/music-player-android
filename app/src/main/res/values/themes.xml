@@ -13,4 +13,8 @@
         <item name="android:statusBarColor" tools:targetApi="l">?attr/colorPrimaryVariant</item>
         <!-- Customize your theme here. -->
     </style>
+
+    <style name="circle_button">
+        <item name="android:background">@drawable/circle_button</item>
+    </style>
 </resources>

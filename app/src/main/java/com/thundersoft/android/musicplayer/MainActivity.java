@@ -22,8 +22,10 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.EditText;
 import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.thundersoft.android.musicplayer.player.Player;
 import com.thundersoft.android.musicplayer.player.Track;
@@ -33,6 +35,7 @@ import com.thundersoft.android.musicplayer.service.PlayerServiceConnection;
 import com.thundersoft.android.musicplayer.util.Constants;
 import com.thundersoft.android.musicplayer.util.Utils;
 
+import java.io.IOException;
 import java.util.List;
 
 public class MainActivity extends AppCompatActivity implements AdapterView.OnItemClickListener {
@@ -58,10 +61,12 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
             if (convertView == null)
                 convertView = LayoutInflater.from(getContext()).inflate(resourceId, parent, false);
             ViewHolder viewHolder = new ViewHolder();
+            viewHolder.trackImage = convertView.findViewById(R.id.track_image);
             viewHolder.trackTitle = convertView.findViewById(R.id.track_title);
             viewHolder.trackArtist = convertView.findViewById(R.id.track_artist);
             viewHolder.trackDuration = convertView.findViewById(R.id.track_duration);
             Track track = tracks.get(position);
+            if (track.getImage() != null) viewHolder.trackImage.setImageBitmap(track.getImage());
             viewHolder.trackTitle.setText(track.getTitle());
             viewHolder.trackArtist.setText(track.getArtist());
             viewHolder.trackDuration.setText(track.getDuration());
@@ -69,6 +74,7 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
         }
 
         private static class ViewHolder {
+            ImageView trackImage;
             TextView trackTitle;
             TextView trackArtist;
             TextView trackDuration;
@@ -86,7 +92,6 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
         setContentView(R.layout.activity_main);
 
         // bind service
-        // serviceConnection = new PlayerServiceConnection().setContext(getApplication());
         serviceConnection = PlayerServiceConnection.getInstance();
         serviceConnection.setContext(getApplication());
         Utils.bindService(getApplication(), PlayerService.class, serviceConnection);
@@ -119,7 +124,6 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
     private void mainLogic() {
         tracks = TrackInfoReader.read(this);
 
-
         viewHolder.lvTrackList = findViewById(R.id.track_list);
         viewHolder.lvTrackList.setAdapter(new TrackListAdaptor(this, R.layout.layout_track_item, tracks).setTracks(tracks));
         viewHolder.lvTrackList.setOnItemClickListener(this);
@@ -137,8 +141,12 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
         setIbControlDrawable();
 
         viewHolder.ibControl.setOnClickListener(v -> {
-            serviceConnection.getBinder().control();
-            setIbControlDrawable();
+            if (player.current() != null) {
+                serviceConnection.getBinder().control();
+                setIbControlDrawable();
+            } else {
+                Toast.makeText(this, "No track in play list", Toast.LENGTH_SHORT).show();
+            }
         });
     }
 
@@ -150,11 +158,13 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
     }
 
     private void startActivityWithCurrentTrack(Track track) {
-        Intent intent = new Intent(this, PlayActivity.class);
-        intent.putExtra(Constants.TRACK_TITLE, track.getTitle());
-        intent.putExtra(Constants.TRACK_ARTIST, track.getArtist());
-        intent.putExtra(Constants.TRACK_DURATION, track.getDuration());
-        startActivityForResult(intent, Constants.MAIN_INTENT_REQUEST);
+        if (track != null) {
+            Intent intent = new Intent(this, PlayActivity.class);
+            intent.putExtra(Constants.TRACK_TITLE, track.getTitle());
+            intent.putExtra(Constants.TRACK_ARTIST, track.getArtist());
+            intent.putExtra(Constants.TRACK_DURATION, track.getDuration());
+            startActivityForResult(intent, Constants.MAIN_INTENT_REQUEST);
+        } else Toast.makeText(this, "No track in play list", Toast.LENGTH_SHORT).show();
     }
 
     @Override

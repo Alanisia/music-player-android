@@ -6,6 +6,7 @@ import android.net.Uri;
 import java.util.Objects;
 
 public class Track {
+    private int id;
     private String title;
     private String artist;
     private String duration;
@@ -13,6 +14,15 @@ public class Track {
     private Bitmap image;
     private int minutes;
     private int seconds;
+
+    public int getId() {
+        return id;
+    }
+
+    public Track setId(int id) {
+        this.id = id;
+        return this;
+    }
 
     public String getTitle() {
         return title;
@@ -84,18 +94,21 @@ public class Track {
 
         Track track = (Track) o;
 
+        if (id != track.id) return false;
         if (minutes != track.minutes) return false;
         if (seconds != track.seconds) return false;
         if (!Objects.equals(title, track.title)) return false;
         if (!Objects.equals(artist, track.artist)) return false;
-        if (!Objects.equals(duration, track.duration)) return false;
+        if (!Objects.equals(duration, track.duration))
+            return false;
         if (!Objects.equals(path, track.path)) return false;
         return Objects.equals(image, track.image);
     }
 
     @Override
     public int hashCode() {
-        int result = title != null ? title.hashCode() : 0;
+        int result = id;
+        result = 31 * result + (title != null ? title.hashCode() : 0);
         result = 31 * result + (artist != null ? artist.hashCode() : 0);
         result = 31 * result + (duration != null ? duration.hashCode() : 0);
         result = 31 * result + (path != null ? path.hashCode() : 0);

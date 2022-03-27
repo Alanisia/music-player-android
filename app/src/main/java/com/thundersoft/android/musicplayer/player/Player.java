@@ -16,7 +16,7 @@ public class Player {
     private int currentModeIndex;
     private PlayMode currentMode = modes[currentModeIndex];
 
-    private final List<Track> playList = new LinkedList<>();
+    private final LinkedList<Track> playList = new LinkedList<>();
     private Track currentTrack;
     private int currentTrackIndex = -1;
 
@@ -31,18 +31,23 @@ public class Player {
 
     public void previous() {
         ListIterator<Track> it = playList.listIterator(currentTrackIndex);
-        it.previous();
-        currentTrack = it.previous();
-        Log.d(TAG, "previous: " + currentTrack);
+        if (it.hasPrevious()) {
+            it.previous();
+            currentTrack = it.previous();
+        } else currentTrack = playList.getLast();
         currentTrackIndex = (currentTrackIndex - 1) % playList.size();
+        if (currentTrackIndex < 0) currentTrackIndex = playList.size() - 1;
+        Log.d(TAG, String.format("previous: currentTrack = %s, index = %d", currentTrack, currentTrackIndex));
     }
 
     public void next() {
         ListIterator<Track> it = playList.listIterator(currentTrackIndex);
-        it.next();
-        currentTrack = it.next();
-        Log.d(TAG, "next: " + currentTrack);
+        if (it.hasNext()) {
+            it.next();
+            currentTrack = it.hasNext() ? it.next() : playList.getFirst();
+        } else currentTrack = playList.getFirst();
         currentTrackIndex = (currentTrackIndex + 1) % playList.size();
+        Log.d(TAG, String.format("next: currentTrack = %s, index = %d", currentTrack, currentTrackIndex));
     }
 
     public Track get(int index) {

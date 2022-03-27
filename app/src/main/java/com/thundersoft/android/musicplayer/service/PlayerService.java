@@ -20,7 +20,7 @@ import java.io.IOException;
 public class PlayerService extends Service {
     private static final String TAG = PlayerService.class.getSimpleName();
     private final Player player = Player.getInstance();
-    private MediaPlayer mediaPlayer;
+    private MediaPlayer mediaPlayer = new MediaPlayer();
 
     @Nullable
     @Override
@@ -45,18 +45,20 @@ public class PlayerService extends Service {
 
     public class PlayerBinder extends Binder {
         private Context context;
+        private boolean initialized = false;
 
         public void play() {
-            if (mediaPlayer == null) {
-                mediaPlayer = new MediaPlayer();
-                mediaPlayer.setAudioAttributes(new AudioAttributes.
-                        Builder().setContentType(AudioAttributes.CONTENT_TYPE_MUSIC).build());
-            } else reset();
+            mediaPlayer.setAudioAttributes(new AudioAttributes.
+                    Builder().setContentType(AudioAttributes.CONTENT_TYPE_MUSIC).build());
+
+            if (initialized) reset();
+
+            initialized = true;
 
             try {
-                Track track = player.current();
-                mediaPlayer.setDataSource(context, track.getPath());
-                mediaPlayer.prepareAsync();
+                Track current = player.current();
+                mediaPlayer.setDataSource(context, current.getPath());
+                mediaPlayer.prepare();
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -64,13 +66,13 @@ public class PlayerService extends Service {
             mediaPlayer.setOnPreparedListener(MediaPlayer::start);
             mediaPlayer.setOnCompletionListener(p -> sendBroadcast(new Intent(Constants.ACTION_PLAY_COMPLETE)));
             mediaPlayer.setOnErrorListener((p, what, extra) -> {
-                Toast.makeText(context, "Error occurred!", Toast.LENGTH_SHORT).show();
+                Toast.makeText(context, "Error occurred! Error code: " + what, Toast.LENGTH_SHORT).show();
                 return true;
             });
         }
 
         public boolean control() {
-            if (mediaPlayer != null) {
+            if (initialized) {
                 if (mediaPlayer.isPlaying()) {
                     mediaPlayer.pause();
                     player.setPlaying(false);
@@ -100,11 +102,15 @@ public class PlayerService extends Service {
             player.setPlaying(true);
         }
 
+        public void seekTo(int second) {
+            mediaPlayer.seekTo(second);
+//            play();
+//            mediaPlayer.pause();
+        }
+
         public void reset() {
-            if (mediaPlayer != null) {
-                mediaPlayer.stop();
-                mediaPlayer.reset();
-            }
+            if (mediaPlayer.isPlaying()) mediaPlayer.stop();
+            mediaPlayer.reset();
         }
 
         public PlayerBinder setContext(Context context) {

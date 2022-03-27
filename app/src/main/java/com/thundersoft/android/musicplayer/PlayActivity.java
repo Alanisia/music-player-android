@@ -5,10 +5,16 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.Drawable;
+import android.graphics.drawable.VectorDrawable;
 import android.media.MediaPlayer;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.os.Parcelable;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
@@ -18,6 +24,7 @@ import android.widget.SeekBar;
 import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.graphics.drawable.RoundedBitmapDrawableFactory;
 
 import com.thundersoft.android.musicplayer.player.PlayMode;
 import com.thundersoft.android.musicplayer.player.Player;
@@ -26,6 +33,7 @@ import com.thundersoft.android.musicplayer.service.PlayerServiceConnection;
 import com.thundersoft.android.musicplayer.util.Constants;
 import com.thundersoft.android.musicplayer.util.Utils;
 
+import java.io.ByteArrayOutputStream;
 import java.util.Objects;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -81,6 +89,8 @@ public class PlayActivity extends AppCompatActivity implements View.OnClickListe
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
                 viewHolder.currentTime.setText(Utils.getProgress(currentTime));
+                if (currentTime == viewHolder.timeBar.getMax())
+                    timing = false;
             }
 
             @Override
@@ -92,7 +102,7 @@ public class PlayActivity extends AppCompatActivity implements View.OnClickListe
             public void onStopTrackingTouch(SeekBar seekBar) {
                 PlayerService.PlayerBinder binder = serviceConnection.getBinder();
                 currentTime = seekBar.getProgress();
-                binder.getMediaPlayer().seekTo(currentTime * 1000);
+                binder.seekTo(currentTime * 1000);
                 viewHolder.currentTime.setText(Utils.getProgress(currentTime));
                 if (player.playing()) {
                     // start timing
@@ -108,13 +118,17 @@ public class PlayActivity extends AppCompatActivity implements View.OnClickListe
         super.onStart();
 
         // set timer
-        MediaPlayer mediaPlayer = serviceConnection.getBinder().getMediaPlayer();
+        PlayerService.PlayerBinder binder = serviceConnection.getBinder();
+        MediaPlayer mediaPlayer = binder.getMediaPlayer();
         currentTime = mediaPlayer != null ? mediaPlayer.getCurrentPosition() / 1000 : 0;
         setTimer();
         if (player.playing()) {
             timing = true;
             viewHolder.playOrPause.setImageResource(R.drawable.ic_baseline_pause_circle_outline_24);
         }
+//        control();
+//        timing = true;
+//        viewHolder.playOrPause.setImageResource(R.drawable.ic_baseline_pause_circle_outline_24);
     }
 
     @Override
@@ -150,8 +164,11 @@ public class PlayActivity extends AppCompatActivity implements View.OnClickListe
     public void onClick(View v) {
         switch (v.getId()) {
             case R.id.album_image:
+                ImageView imageView = findViewById(v.getId());
+                Drawable drawable = imageView.getDrawable();
+                byte[] bytes = Utils.drawable2bytes(drawable);
                 Intent intent = new Intent(this, AlbumPictureActivity.class);
-                intent.putExtra(Constants.ALBUM_ART, new byte[1024]); // TODO
+                intent.putExtra(Constants.ALBUM_ART, bytes);
                 startActivity(intent);
                 break;
             case R.id.play_mode:
@@ -187,6 +204,7 @@ public class PlayActivity extends AppCompatActivity implements View.OnClickListe
         viewHolder.title.setText(player.current().getTitle());
         viewHolder.artist.setText(player.current().getArtist());
         viewHolder.duration.setText(player.current().getDuration());
+        viewHolder.timeBar.setMax(player.current().getMinutes() * 60 + player.current().getSeconds());
         viewHolder.timeBar.setProgress(currentTime);
         timing = true;
         setTimer();

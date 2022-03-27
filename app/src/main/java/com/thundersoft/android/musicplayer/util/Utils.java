@@ -4,10 +4,19 @@ import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
+import android.graphics.Bitmap;
+import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.Drawable;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import java.io.ByteArrayOutputStream;
 
 import static android.content.Context.BIND_AUTO_CREATE;
 
 public final class Utils {
+    private static final Gson gson = new Gson();
+    private static final Gson gsonPretty = new GsonBuilder().setPrettyPrinting().create();
+
     public static String getProgress(int currentTime) {
         int minutes = currentTime / 60;
         int seconds = currentTime % 60;
@@ -30,5 +39,22 @@ public final class Utils {
                                    ServiceConnection serviceConnection) {
         Intent serviceIntent = new Intent(context, serviceClass);
         context.bindService(serviceIntent, serviceConnection, BIND_AUTO_CREATE);
+    }
+
+    public static byte[] drawable2bytes(Drawable drawable) {
+        if (drawable instanceof BitmapDrawable) {
+            Bitmap bitmap = ((BitmapDrawable) drawable).getBitmap();
+            ByteArrayOutputStream out = new ByteArrayOutputStream();
+            bitmap.compress(Bitmap.CompressFormat.PNG, 100, out);
+            return out.toByteArray();
+        } else return null;
+    }
+
+    public static String json(Object value, boolean pretty) {
+        return pretty ? gsonPretty.toJson(value) : gson.toJson(value);
+    }
+
+    public static Object fromJson(String json, Class<?> clazz) {
+        return gson.fromJson(json, clazz);
     }
 }
