@@ -5,36 +5,38 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
-import android.graphics.drawable.VectorDrawable;
 import android.media.MediaPlayer;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
-import android.os.Parcelable;
 import android.util.Log;
 import android.view.KeyEvent;
+import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewGroup;
+import android.widget.ArrayAdapter;
+import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.ListView;
 import android.widget.SeekBar;
 import android.widget.TextView;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.graphics.drawable.RoundedBitmapDrawableFactory;
 
+import com.thundersoft.android.musicplayer.component.PlayListPopupWindow;
 import com.thundersoft.android.musicplayer.player.PlayMode;
 import com.thundersoft.android.musicplayer.player.Player;
+import com.thundersoft.android.musicplayer.player.Track;
 import com.thundersoft.android.musicplayer.service.PlayerService;
 import com.thundersoft.android.musicplayer.service.PlayerServiceConnection;
 import com.thundersoft.android.musicplayer.util.Constants;
 import com.thundersoft.android.musicplayer.util.Utils;
 
-import java.io.ByteArrayOutputStream;
-import java.util.Objects;
+import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -78,6 +80,7 @@ public class PlayActivity extends AppCompatActivity implements View.OnClickListe
         viewHolder.playList.setOnClickListener(this);
 
         setModeImageResource();
+        PlayerService.PlayerBinder binder = serviceConnection.getBinder();
 
         Intent intent = getIntent();
         viewHolder.title.setText(intent.getStringExtra(Constants.TRACK_TITLE));
@@ -89,7 +92,7 @@ public class PlayActivity extends AppCompatActivity implements View.OnClickListe
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
                 viewHolder.currentTime.setText(Utils.getProgress(currentTime));
-                if (currentTime == viewHolder.timeBar.getMax())
+                if (currentTime >= viewHolder.timeBar.getMax())
                     timing = false;
             }
 
@@ -100,7 +103,6 @@ public class PlayActivity extends AppCompatActivity implements View.OnClickListe
 
             @Override
             public void onStopTrackingTouch(SeekBar seekBar) {
-                PlayerService.PlayerBinder binder = serviceConnection.getBinder();
                 currentTime = seekBar.getProgress();
                 binder.seekTo(currentTime * 1000);
                 viewHolder.currentTime.setText(Utils.getProgress(currentTime));
@@ -111,29 +113,32 @@ public class PlayActivity extends AppCompatActivity implements View.OnClickListe
                 }
             }
         });
-    }
 
-    @Override
-    protected void onStart() {
-        super.onStart();
 
-        // set timer
-        PlayerService.PlayerBinder binder = serviceConnection.getBinder();
         MediaPlayer mediaPlayer = binder.getMediaPlayer();
-        currentTime = mediaPlayer != null ? mediaPlayer.getCurrentPosition() / 1000 : 0;
-        setTimer();
-        if (player.playing()) {
-            timing = true;
-            viewHolder.playOrPause.setImageResource(R.drawable.ic_baseline_pause_circle_outline_24);
-        }
-//        control();
-//        timing = true;
-//        viewHolder.playOrPause.setImageResource(R.drawable.ic_baseline_pause_circle_outline_24);
-    }
 
-    @Override
-    protected void onResume() {
-        super.onResume();
+        setTimer();
+
+        switch (intent.getAction()) {
+            case Constants.ACTION_BOTTOM_INTENT:
+                currentTime = binder.isInitialized() ? mediaPlayer.getCurrentPosition() / 1000 : 0;
+                if (player.playing()) {
+                    timing = true;
+                    viewHolder.playOrPause.setImageResource(R.drawable.ic_baseline_pause_circle_outline_24);
+                }
+                break;
+            case Constants.ACTION_LIST_ITEM_INTENT:
+                currentTime = 0;
+                binder.play();
+                timing = true;
+                viewHolder.playOrPause.setImageResource(R.drawable.ic_baseline_pause_circle_outline_24);
+                break;
+            default:
+                break;
+        }
+
+        viewHolder.timeBar.setProgress(currentTime);
+        viewHolder.currentTime.setText(Utils.getProgress(currentTime));
 
         // register broadcast
         receiver = new PlayerBroadcastReceiver();
@@ -143,13 +148,19 @@ public class PlayActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     @Override
-    protected void onPause() {
-        super.onPause();
-        unregisterReceiver(receiver);
+    protected void onRestart() {
+        super.onRestart();
+
+        Log.d(TAG, "onRestart: " + currentTime);
+        PlayerService.PlayerBinder binder = serviceConnection.getBinder();
+        binder.seekTo(currentTime * 1000);
+        viewHolder.timeBar.setProgress(currentTime);
+        viewHolder.currentTime.setText(Utils.getProgress(currentTime));
     }
 
     @Override
     protected void onDestroy() {
+        unregisterReceiver(receiver);
         super.onDestroy();
     }
 
@@ -184,18 +195,14 @@ public class PlayActivity extends AppCompatActivity implements View.OnClickListe
                 next(false);
                 break;
             case R.id.play_list:
-                // create fragment
-                // show play list
-                // wait for clicking
-                // modify player
-                // modify data in this activity
-                // TODO
+                initPopupWindow(v);
                 break;
             case R.id.play_or_pause:
                 Log.d(TAG, "onClick: play or pause");
                 control();
                 break;
-            default: break;
+            default:
+                break;
         }
     }
 
@@ -204,6 +211,7 @@ public class PlayActivity extends AppCompatActivity implements View.OnClickListe
         viewHolder.title.setText(player.current().getTitle());
         viewHolder.artist.setText(player.current().getArtist());
         viewHolder.duration.setText(player.current().getDuration());
+        viewHolder.currentTime.setText(Utils.getProgress(currentTime));
         viewHolder.timeBar.setMax(player.current().getMinutes() * 60 + player.current().getSeconds());
         viewHolder.timeBar.setProgress(currentTime);
         timing = true;
@@ -267,7 +275,72 @@ public class PlayActivity extends AppCompatActivity implements View.OnClickListe
             case SHUFFLE:
                 viewHolder.playMode.setImageResource(PlayMode.SHUFFLE.getUri());
                 break;
-            default: break;
+            default:
+                break;
+        }
+    }
+
+    @SuppressLint("InflateParams")
+    private void initPopupWindow(View v) {
+        View view = LayoutInflater.from(this).inflate(R.layout.popup_play_list, null);
+        ListView playListView = view.findViewById(R.id.play_list_view);
+        playListView.setAdapter(new PlayListAdaptor(this, R.layout.layout_play_list_item, player.getPlayList())
+                .setPlayList(player.getPlayList()));
+        playListView.setOnItemClickListener(((parent, view1, position, id) -> {
+            player.setCurrent(position);
+
+            PlayerService.PlayerBinder binder = serviceConnection.getBinder();
+            reInitPlayer();
+            binder.play();
+        }));
+
+        PlayListPopupWindow popupWindow = new PlayListPopupWindow(view, ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT, true);
+        popupWindow.show(v);
+
+        Button addNext = view.findViewById(R.id.add_next);
+        addNext.setOnClickListener(v1 -> {
+            if (player.addNext(player.current()))
+                ((PlayListAdaptor) playListView.getAdapter()).notifyDataSetChanged();
+        });
+    }
+
+    private class PlayListAdaptor extends ArrayAdapter<Track> {
+        private final int resourceId;
+        private List<Track> playList;
+
+        public PlayListAdaptor(@NonNull Context context, int resource, @NonNull List<Track> objects) {
+            super(context, resource, objects);
+            resourceId = resource;
+        }
+
+        @NonNull
+        @Override
+        public View getView(int position, @Nullable View convertView, @NonNull ViewGroup parent) {
+            if (convertView == null)
+                convertView = LayoutInflater.from(getContext()).inflate(resourceId, parent, false);
+            ViewHolder viewHolder = new ViewHolder();
+            viewHolder.itemTitle = convertView.findViewById(R.id.item_title);
+            viewHolder.itemArtist = convertView.findViewById(R.id.item_artist);
+            viewHolder.remove = convertView.findViewById(R.id.remove);
+            Track track = playList.get(position);
+            viewHolder.itemTitle.setText(track.getTitle());
+            viewHolder.itemArtist.setText(track.getArtist());
+            viewHolder.remove.setOnClickListener(v -> {
+                player.remove(track);
+                notifyDataSetChanged();
+            });
+            return convertView;
+        }
+
+        public PlayListAdaptor setPlayList(List<Track> playList) {
+            this.playList = playList;
+            return this;
+        }
+
+        private class ViewHolder {
+            TextView itemTitle, itemArtist;
+            ImageButton remove;
         }
     }
 

@@ -1,14 +1,6 @@
 package com.thundersoft.android.musicplayer;
 
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.constraintlayout.widget.ConstraintLayout;
-import androidx.core.app.ActivityCompat;
-import androidx.core.content.ContextCompat;
-
 import android.Manifest;
-import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -27,6 +19,13 @@ import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.constraintlayout.widget.ConstraintLayout;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
+
 import com.thundersoft.android.musicplayer.player.Player;
 import com.thundersoft.android.musicplayer.player.Track;
 import com.thundersoft.android.musicplayer.player.TrackInfoReader;
@@ -35,7 +34,6 @@ import com.thundersoft.android.musicplayer.service.PlayerServiceConnection;
 import com.thundersoft.android.musicplayer.util.Constants;
 import com.thundersoft.android.musicplayer.util.Utils;
 
-import java.io.IOException;
 import java.util.List;
 
 public class MainActivity extends AppCompatActivity implements AdapterView.OnItemClickListener {
@@ -118,7 +116,7 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
         player.setCurrent(position);
         Track track = tracks.get(position);
         Log.d(TAG, "onItemClick: " + track);
-        startActivityWithCurrentTrack(track);
+        startActivityWithCurrentTrack(track, Constants.ACTION_LIST_ITEM_INTENT);
     }
 
     private void mainLogic() {
@@ -132,7 +130,8 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
         String keyword = viewHolder.etSearchTrack.getText().toString();
 
         viewHolder.clPlayingBottomNav = findViewById(R.id.playing_bottom_nav);
-        viewHolder.clPlayingBottomNav.setOnClickListener(v -> startActivityWithCurrentTrack(player.current()));
+        viewHolder.clPlayingBottomNav.setOnClickListener(v ->
+                startActivityWithCurrentTrack(player.current(), Constants.ACTION_BOTTOM_INTENT));
 
         viewHolder.tvPlayingTitle = findViewById(R.id.playing_title);
         viewHolder.tvPlayingTitle.setText(player.current() == null ? "" : player.current().getTitle());
@@ -157,12 +156,13 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
         );
     }
 
-    private void startActivityWithCurrentTrack(Track track) {
+    private void startActivityWithCurrentTrack(Track track, String action) {
         if (track != null) {
             Intent intent = new Intent(this, PlayActivity.class);
             intent.putExtra(Constants.TRACK_TITLE, track.getTitle());
             intent.putExtra(Constants.TRACK_ARTIST, track.getArtist());
             intent.putExtra(Constants.TRACK_DURATION, track.getDuration());
+            intent.setAction(action);
             startActivityForResult(intent, Constants.MAIN_INTENT_REQUEST);
         } else Toast.makeText(this, "No track in play list", Toast.LENGTH_SHORT).show();
     }

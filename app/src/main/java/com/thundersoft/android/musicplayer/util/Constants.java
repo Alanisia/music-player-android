@@ -9,4 +9,6 @@ public final class Constants {
 
     public static final int MAIN_INTENT_REQUEST = 1;
     public static final int PLAYER_RETURN_RESULT = 2;
+    public static final String ACTION_LIST_ITEM_INTENT = "ACTION_LIST_ITEM_INTENT";
+    public static final String ACTION_BOTTOM_INTENT = "ACTION_BOTTOM_INTENT";
 }

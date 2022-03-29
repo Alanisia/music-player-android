@@ -6,7 +6,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Random;
-import java.util.stream.IntStream;
 
 public class Player {
     private static final String TAG = Player.class.getSimpleName();
@@ -33,9 +32,9 @@ public class Player {
         ListIterator<Track> it = playList.listIterator(currentTrackIndex);
         if (it.hasPrevious()) {
             it.previous();
-            currentTrack = it.previous();
+            currentTrack = it.hasPrevious() ? it.previous() : playList.getLast();
         } else currentTrack = playList.getLast();
-        currentTrackIndex = (currentTrackIndex - 1) % playList.size();
+        currentTrackIndex--;
         if (currentTrackIndex < 0) currentTrackIndex = playList.size() - 1;
         Log.d(TAG, String.format("previous: currentTrack = %s, index = %d", currentTrack, currentTrackIndex));
     }
@@ -46,45 +45,9 @@ public class Player {
             it.next();
             currentTrack = it.hasNext() ? it.next() : playList.getFirst();
         } else currentTrack = playList.getFirst();
-        currentTrackIndex = (currentTrackIndex + 1) % playList.size();
+        currentTrackIndex++;
+        if (currentTrackIndex == playList.size()) currentTrackIndex = 0;
         Log.d(TAG, String.format("next: currentTrack = %s, index = %d", currentTrack, currentTrackIndex));
-    }
-
-    public Track get(int index) {
-        if (index == currentTrackIndex)
-            return currentTrack;
-        currentTrack = playList.get(index);
-        currentTrackIndex = index;
-        return currentTrack;
-    }
-
-    // TODO
-    public void addNext(Track track) {
-        if (!track.equals(currentTrack)) {
-            if (!playList.remove(track)) {
-                ListIterator<Track> it = playList.listIterator(currentTrackIndex);
-                it.add(track);
-            } else {
-
-            }
-
-        }
-    }
-
-    /**
-     * TODO
-     * The track, which will be removed but now playing, should be stopped before deletion.
-     * If it is the playing track, the system should select next track under current mode,
-     * otherwise there is no influence and we can continue playing the current track.
-     * Maybe index of current track will be changed after deletion...
-     * @param track the track will be removed
-     */
-    public void remove(Track track) {
-        if (track.equals(currentTrack)) {
-            // playListIterator.remove();
-            nextOverPlaying();
-        }
-        playList.remove(track);
     }
 
     public void nextOverPlaying() {
@@ -106,6 +69,31 @@ public class Player {
             default:
                 break;
         }
+    }
+
+    public Track get(int index) {
+        if (index == currentTrackIndex)
+            return currentTrack;
+        currentTrack = playList.get(index);
+        currentTrackIndex = index;
+        return currentTrack;
+    }
+
+    public boolean addNext(Track track) {
+        if (!track.equals(currentTrack)) {
+            remove(track);
+            ListIterator<Track> it = playList.listIterator(currentTrackIndex);
+            it.add(track);
+            return true;
+        }
+        return false;
+    }
+
+    public void remove(Track track) {
+        if (track.equals(currentTrack)) {
+            playList.remove(track);
+            nextOverPlaying();
+        } else playList.remove(track);
     }
 
     public Track current() {
@@ -131,10 +119,6 @@ public class Player {
 
     public void setPlaying(boolean playing) {
         this.playing = playing;
-    }
-
-    public Track getCurrentTrack() {
-        return currentTrack;
     }
 
     public PlayMode getCurrentMode() {

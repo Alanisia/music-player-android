@@ -45,6 +45,7 @@ public class PlayerService extends Service {
 
     public class PlayerBinder extends Binder {
         private Context context;
+        private Track current;
         private boolean initialized = false;
 
         public void play() {
@@ -56,14 +57,17 @@ public class PlayerService extends Service {
             initialized = true;
 
             try {
-                Track current = player.current();
+                current = player.current();
                 mediaPlayer.setDataSource(context, current.getPath());
                 mediaPlayer.prepare();
             } catch (IOException e) {
                 e.printStackTrace();
             }
 
-            mediaPlayer.setOnPreparedListener(MediaPlayer::start);
+            mediaPlayer.setOnPreparedListener(p -> {
+                p.start();
+                player.setPlaying(true);
+            });
             mediaPlayer.setOnCompletionListener(p -> sendBroadcast(new Intent(Constants.ACTION_PLAY_COMPLETE)));
             mediaPlayer.setOnErrorListener((p, what, extra) -> {
                 Toast.makeText(context, "Error occurred! Error code: " + what, Toast.LENGTH_SHORT).show();
@@ -116,6 +120,14 @@ public class PlayerService extends Service {
         public PlayerBinder setContext(Context context) {
             this.context = context;
             return this;
+        }
+
+        public boolean isInitialized() {
+            return initialized;
+        }
+
+        public Track getCurrent() {
+            return current;
         }
 
         public MediaPlayer getMediaPlayer() {

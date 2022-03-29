@@ -3,8 +3,6 @@ package com.thundersoft.android.musicplayer.player;
 import android.graphics.Bitmap;
 import android.net.Uri;
 
-import java.util.Objects;
-
 public class Track {
     private int id;
     private String title;
@@ -94,15 +92,7 @@ public class Track {
 
         Track track = (Track) o;
 
-        if (id != track.id) return false;
-        if (minutes != track.minutes) return false;
-        if (seconds != track.seconds) return false;
-        if (!Objects.equals(title, track.title)) return false;
-        if (!Objects.equals(artist, track.artist)) return false;
-        if (!Objects.equals(duration, track.duration))
-            return false;
-        if (!Objects.equals(path, track.path)) return false;
-        return Objects.equals(image, track.image);
+        return id == track.id;
     }
 
     @Override
