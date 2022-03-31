@@ -23,17 +23,19 @@ import com.thundersoft.android.musicplayer.util.Utils;
 @SuppressLint("ClickableViewAccessibility")
 public class AlbumPictureActivity extends AppCompatActivity implements View.OnTouchListener {
     private static final String TAG = AlbumPictureActivity.class.getSimpleName();
-    private float x, y;
+    private float x, y, x1, y1;
     private ImageView albumPicture;
     private ImageLocation imageLocation;
-    private int screenWidth, screenHeight;
     private int zoomTimes;
 
     private static class ImageLocation {
         int l, t, r, b;
 
         public ImageLocation(int left, int top, int right, int bottom) {
-            l = left; t = top; r = right; b = bottom;
+            l = left;
+            t = top;
+            r = right;
+            b = bottom;
         }
 
         @Override
@@ -59,17 +61,47 @@ public class AlbumPictureActivity extends AppCompatActivity implements View.OnTo
                 case MotionEvent.ACTION_DOWN:
                     x = event.getX();
                     y = event.getY();
+                    x1 = event.getRawX();
+                    y1 = event.getRawY();
                     Log.d(TAG, "onTouch: x = " + x + "|y = " + y);
                 case MotionEvent.ACTION_MOVE:
-                    int left = (int) (event.getRawX() - x);
-                    int top = (int) (event.getRawY() - y - getTitleHeight() - getStatusBarHeight());
+                    float x2 = event.getRawX();
+                    float y2 = event.getRawY();
+                    float x3 = x2 - x1, y3 = y2 - y1;
+
+                    int left = (int) (x2 - x);
+                    int top = (int) (y2 - y - getTitleHeight() - getStatusBarHeight());
                     int right = left + v.getWidth();
                     int bottom = top + v.getHeight();
-                    if (left >= 0 && top >= 0 && right <= screenWidth && bottom <= screenHeight) {
-                        v.layout(left, top, right, bottom);
-                        imageLocation = new ImageLocation(left, top, v.getWidth() + left, v.getHeight() + top);
-                        Log.d(TAG, "onTouch: " + imageLocation);
+
+                    imageLocation = new ImageLocation(left, top, v.getWidth() + left, v.getHeight() + top);
+                    Log.d(TAG, "onTouch: " + imageLocation);
+
+                    DisplayMetrics dm = new DisplayMetrics();
+                    getWindowManager().getDefaultDisplay().getMetrics(dm);
+                    int screenHeight = dm.heightPixels;
+                    int screenWidth = dm.widthPixels;
+
+                    int maxLeft = 0, maxRight = screenWidth, maxTop = 0, maxBottom = screenHeight;
+                    if (v.getWidth() > screenWidth) {
+                        maxLeft = screenWidth - v.getWidth();
+                        maxRight = v.getWidth();
+                        Log.d(TAG, String.format("onTouch: maxLeft = %d, maxRight = %d, width = %d, screenWidth = %d",
+                                maxLeft, maxRight, v.getWidth(), screenWidth));
                     }
+                    if (v.getHeight() > screenHeight) {
+                        maxTop = screenHeight - v.getHeight();
+                        maxBottom = v.getHeight();
+                    }
+
+                    if (x3 < 0 && left < maxLeft)     break;
+                    if (y3 < 0 && top < maxTop)       break;
+                    if (x3 > 0 && right > maxRight)   break;
+                    if (y3 > 0 && bottom > maxBottom) break;
+
+                    v.layout(left, top, right, bottom);
+                    x1 = x2;
+                    y1 = y2;
                     break;
                 default:
                     break;
@@ -85,28 +117,18 @@ public class AlbumPictureActivity extends AppCompatActivity implements View.OnTo
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_album_picture);
 
-        DisplayMetrics dm = new DisplayMetrics();
-        getWindowManager().getDefaultDisplay().getMetrics(dm);
-        screenHeight = dm.heightPixels;
-        screenWidth = dm.widthPixels;
-
         Intent intent = getIntent();
         byte[] bytes = intent.getByteArrayExtra(Constants.ALBUM_ART);
         Bitmap bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
         albumPicture = findViewById(R.id.album_picture);
         albumPicture.setImageBitmap(bitmap);
         albumPicture.setOnTouchListener(this);
-//        int[] xy = new int[2], xys = new int[2];
-//        albumPicture.getLocationInWindow(xy);
-//        albumPicture.getLocationOnScreen(xys);
-//        Log.d(TAG, String.format("onCreate: x = %d, y = %d", xy[0], xy[1]));
-//        Log.d(TAG, String.format("onCreate: x = %d, y = %d", xys[0], xys[1]));
 
         ImageButton zoomIn = findViewById(R.id.zoom_in);
         ImageButton zoomOut = findViewById(R.id.zoom_out);
 
         zoomIn.setOnClickListener(v -> {
-            if (zoomTimes < 3) {
+            if (zoomTimes < 4) {
                 resize(bitmap, albumPicture.getWidth(), albumPicture.getHeight(), true);
                 zoomTimes++;
             }
@@ -139,8 +161,10 @@ public class AlbumPictureActivity extends AppCompatActivity implements View.OnTo
         imageView.setImageBitmap(bitmap);
         imageView.setId(R.id.album_picture);
         float scale = 1.25f;
-        if (in) imageView.setLayoutParams(new ConstraintLayout.LayoutParams((int) (w * scale), (int) (h * scale)));
-        else imageView.setLayoutParams(new ConstraintLayout.LayoutParams((int) (w / scale), (int) (h / scale)));
+        if (in)
+            imageView.setLayoutParams(new ConstraintLayout.LayoutParams((int) (w * scale), (int) (h * scale)));
+        else
+            imageView.setLayoutParams(new ConstraintLayout.LayoutParams((int) (w / scale), (int) (h / scale)));
         Log.d(TAG, "resize: " + imageLocation);
         imageView.layout(imageLocation.l, imageLocation.t, imageLocation.r, imageLocation.b);
         layout.addView(imageView);

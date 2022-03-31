@@ -1,8 +1,10 @@
 package com.thundersoft.android.musicplayer;
 
 import android.Manifest;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.util.Log;
@@ -42,6 +44,7 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
     private final Player player = Player.getInstance();
     private PlayerServiceConnection serviceConnection;
     private List<Track> tracks;
+    private PlayerBroadcastReceiver receiver;
     private final ViewHolder viewHolder = new ViewHolder();
 
     static class TrackListAdaptor extends ArrayAdapter<Track> {
@@ -147,6 +150,12 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
                 Toast.makeText(this, "No track in play list", Toast.LENGTH_SHORT).show();
             }
         });
+
+        // register broadcast
+        receiver = new PlayerBroadcastReceiver();
+        IntentFilter filter = new IntentFilter();
+        filter.addAction(Constants.ACTION_PLAY_COMPLETE);
+        registerReceiver(receiver, filter);
     }
 
     private void setIbControlDrawable() {
@@ -186,6 +195,7 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
 
     @Override
     protected void onDestroy() {
+        unregisterReceiver(receiver);
         unbindService(serviceConnection);
         super.onDestroy();
     }
@@ -196,5 +206,17 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
         ConstraintLayout clPlayingBottomNav;
         TextView tvPlayingTitle;
         ImageButton ibControl;
+    }
+
+    private class PlayerBroadcastReceiver extends BroadcastReceiver {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            if (intent.getAction().equals(Constants.ACTION_PLAY_COMPLETE)) {
+                PlayerService.PlayerBinder binder = serviceConnection.getBinder();
+                binder.next(true);
+                viewHolder.tvPlayingTitle.setText(player.current().getTitle());
+                setIbControlDrawable();
+            }
+        }
     }
 }

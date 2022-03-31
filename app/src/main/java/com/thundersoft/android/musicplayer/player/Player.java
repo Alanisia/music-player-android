@@ -35,7 +35,7 @@ public class Player {
             currentTrack = it.hasPrevious() ? it.previous() : playList.getLast();
         } else currentTrack = playList.getLast();
         currentTrackIndex--;
-        if (currentTrackIndex < 0) currentTrackIndex = playList.size() - 1;
+        if (currentTrackIndex < 0) currentTrackIndex = playList.size() - 2;
         Log.d(TAG, String.format("previous: currentTrack = %s, index = %d", currentTrack, currentTrackIndex));
     }
 
@@ -102,6 +102,10 @@ public class Player {
 
     public void setCurrent(int index) {
         this.currentTrack = get(index);
+    }
+
+    public int getCurrentTrackIndex() {
+        return currentTrackIndex;
     }
 
     public void setPlayList(List<Track> tracks) {

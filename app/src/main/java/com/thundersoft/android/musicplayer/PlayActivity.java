@@ -5,6 +5,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.graphics.Color;
 import android.graphics.drawable.Drawable;
 import android.media.MediaPlayer;
 import android.os.Bundle;
@@ -303,6 +304,8 @@ public class PlayActivity extends AppCompatActivity implements View.OnClickListe
             if (player.addNext(player.current()))
                 ((PlayListAdaptor) playListView.getAdapter()).notifyDataSetChanged();
         });
+
+        playListView.setSelection(player.getCurrentTrackIndex());
     }
 
     private class PlayListAdaptor extends ArrayAdapter<Track> {
@@ -330,6 +333,8 @@ public class PlayActivity extends AppCompatActivity implements View.OnClickListe
                 player.remove(track);
                 notifyDataSetChanged();
             });
+            if (player.getCurrentTrackIndex() == position)
+                convertView.setBackgroundColor(Color.WHITE);
             return convertView;
         }
 
