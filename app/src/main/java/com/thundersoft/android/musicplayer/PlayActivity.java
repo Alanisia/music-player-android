@@ -17,7 +17,6 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
-import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.ListView;
@@ -294,18 +293,11 @@ public class PlayActivity extends AppCompatActivity implements View.OnClickListe
             reInitPlayer();
             binder.play();
         }));
+        playListView.setSelection(player.getCurrentTrackIndex());
 
         PlayListPopupWindow popupWindow = new PlayListPopupWindow(view, ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT, true);
         popupWindow.show(v);
-
-        Button addNext = view.findViewById(R.id.add_next);
-        addNext.setOnClickListener(v1 -> {
-            if (player.addNext(player.current()))
-                ((PlayListAdaptor) playListView.getAdapter()).notifyDataSetChanged();
-        });
-
-        playListView.setSelection(player.getCurrentTrackIndex());
     }
 
     private class PlayListAdaptor extends ArrayAdapter<Track> {
@@ -325,16 +317,20 @@ public class PlayActivity extends AppCompatActivity implements View.OnClickListe
             ViewHolder viewHolder = new ViewHolder();
             viewHolder.itemTitle = convertView.findViewById(R.id.item_title);
             viewHolder.itemArtist = convertView.findViewById(R.id.item_artist);
-            viewHolder.remove = convertView.findViewById(R.id.remove);
+            // viewHolder.remove = convertView.findViewById(R.id.remove);
             Track track = playList.get(position);
             viewHolder.itemTitle.setText(track.getTitle());
             viewHolder.itemArtist.setText(track.getArtist());
-            viewHolder.remove.setOnClickListener(v -> {
-                player.remove(track);
-                notifyDataSetChanged();
-            });
-            if (player.getCurrentTrackIndex() == position)
-                convertView.setBackgroundColor(Color.WHITE);
+//            viewHolder.remove.setOnClickListener(v -> {
+//                player.remove(track);
+//                notifyDataSetChanged();
+//            });
+            if (player.getCurrentTrackIndex() == position) {
+                Log.d(TAG, String.format("getView: position = %d, index = %d", position, player.getCurrentTrackIndex()));
+                // convertView.setBackgroundColor(Color.WHITE);
+                viewHolder.itemTitle.setTextColor(Color.RED);
+                viewHolder.itemArtist.setTextColor(Color.RED);
+            }
             return convertView;
         }
 

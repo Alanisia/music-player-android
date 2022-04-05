@@ -129,8 +129,8 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
         viewHolder.lvTrackList.setAdapter(new TrackListAdaptor(this, R.layout.layout_track_item, tracks).setTracks(tracks));
         viewHolder.lvTrackList.setOnItemClickListener(this);
 
-        viewHolder.etSearchTrack = findViewById(R.id.search_track);
-        String keyword = viewHolder.etSearchTrack.getText().toString();
+//        viewHolder.etSearchTrack = findViewById(R.id.search_track);
+//        String keyword = viewHolder.etSearchTrack.getText().toString();
 
         viewHolder.clPlayingBottomNav = findViewById(R.id.playing_bottom_nav);
         viewHolder.clPlayingBottomNav.setOnClickListener(v ->
@@ -161,8 +161,7 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
     private void setIbControlDrawable() {
         viewHolder.ibControl.setImageResource(player.playing() ?
                 R.drawable.ic_baseline_pause_circle_outline_24 :
-                R.drawable.ic_baseline_play_circle_outline_24
-        );
+                R.drawable.ic_baseline_play_circle_outline_24);
     }
 
     private void startActivityWithCurrentTrack(Track track, String action) {
@@ -201,7 +200,7 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
     }
 
     private static class ViewHolder {
-        EditText etSearchTrack;
+//        EditText etSearchTrack;
         ListView lvTrackList;
         ConstraintLayout clPlayingBottomNav;
         TextView tvPlayingTitle;

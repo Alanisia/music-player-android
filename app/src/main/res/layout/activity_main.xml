@@ -8,13 +8,13 @@
     android:layout_marginHorizontal="10dp"
     tools:context=".MainActivity">
 
-    <EditText
-        android:id="@+id/search_track"
-        android:hint="输入搜索关键词"
-        android:inputType="text"
-        android:layout_width="match_parent"
-        android:layout_marginTop="10dp"
-        android:layout_height="40dp"/>
+<!--    <EditText-->
+<!--        android:id="@+id/search_track"-->
+<!--        android:hint="输入搜索关键词"-->
+<!--        android:inputType="text"-->
+<!--        android:layout_width="match_parent"-->
+<!--        android:layout_marginTop="10dp"-->
+<!--        android:layout_height="40dp"/>-->
 
     <ListView
         android:id="@+id/track_list"

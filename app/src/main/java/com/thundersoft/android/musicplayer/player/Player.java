@@ -2,6 +2,7 @@ package com.thundersoft.android.musicplayer.player;
 
 import android.util.Log;
 
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.ListIterator;
@@ -15,7 +16,7 @@ public class Player {
     private int currentModeIndex;
     private PlayMode currentMode = modes[currentModeIndex];
 
-    private final LinkedList<Track> playList = new LinkedList<>();
+    private final List<Track> playList = new ArrayList<>();
     private Track currentTrack;
     private int currentTrackIndex = -1;
 
@@ -29,24 +30,16 @@ public class Player {
     }
 
     public void previous() {
-        ListIterator<Track> it = playList.listIterator(currentTrackIndex);
-        if (it.hasPrevious()) {
-            it.previous();
-            currentTrack = it.hasPrevious() ? it.previous() : playList.getLast();
-        } else currentTrack = playList.getLast();
-        currentTrackIndex--;
-        if (currentTrackIndex < 0) currentTrackIndex = playList.size() - 2;
+        --currentTrackIndex;
+        currentTrackIndex = currentTrackIndex < 0 ? playList.size() - 1 : currentTrackIndex;
+        currentTrack = playList.get(currentTrackIndex);
         Log.d(TAG, String.format("previous: currentTrack = %s, index = %d", currentTrack, currentTrackIndex));
     }
 
     public void next() {
-        ListIterator<Track> it = playList.listIterator(currentTrackIndex);
-        if (it.hasNext()) {
-            it.next();
-            currentTrack = it.hasNext() ? it.next() : playList.getFirst();
-        } else currentTrack = playList.getFirst();
-        currentTrackIndex++;
-        if (currentTrackIndex == playList.size()) currentTrackIndex = 0;
+        ++currentTrackIndex;
+        currentTrackIndex = currentTrackIndex >= playList.size() ? 0 : currentTrackIndex;
+        currentTrack = playList.get(currentTrackIndex);
         Log.d(TAG, String.format("next: currentTrack = %s, index = %d", currentTrack, currentTrackIndex));
     }
 

@@ -6,28 +6,19 @@
     android:background="#aaaaaa"
     android:layout_marginHorizontal="20dp"
     android:layout_width="match_parent"
-    android:layout_height="300dp">
+    android:layout_height="wrap_content">
 
     <TextView
         android:text="播放列表"
         android:id="@+id/play_list_head"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintBaseline_toBaselineOf="@+id/add_next"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"/>
-
-    <Button
-        android:id="@+id/add_next"
-        android:text="加入下一曲"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        android:layout_width="wrap_content"
         android:layout_height="wrap_content"/>
 
     <ListView
         android:id="@+id/play_list_view"
-        app:layout_constraintTop_toBottomOf="@id/add_next"
+        app:layout_constraintTop_toBottomOf="@id/play_list_head"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"/>
 
