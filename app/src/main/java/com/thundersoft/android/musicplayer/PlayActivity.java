@@ -288,7 +288,7 @@ public class PlayActivity extends AppCompatActivity implements View.OnClickListe
                 .setPlayList(player.getPlayList()));
         playListView.setOnItemClickListener(((parent, view1, position, id) -> {
             player.setCurrent(position);
-
+            ((PlayListAdaptor) playListView.getAdapter()).notifyDataSetChanged();
             PlayerService.PlayerBinder binder = serviceConnection.getBinder();
             reInitPlayer();
             binder.play();
@@ -312,26 +312,21 @@ public class PlayActivity extends AppCompatActivity implements View.OnClickListe
         @NonNull
         @Override
         public View getView(int position, @Nullable View convertView, @NonNull ViewGroup parent) {
-            if (convertView == null)
-                convertView = LayoutInflater.from(getContext()).inflate(resourceId, parent, false);
+            @SuppressLint("ViewHolder")
+            View view = LayoutInflater.from(getContext()).inflate(resourceId, parent, false);
+
             ViewHolder viewHolder = new ViewHolder();
-            viewHolder.itemTitle = convertView.findViewById(R.id.item_title);
-            viewHolder.itemArtist = convertView.findViewById(R.id.item_artist);
-            // viewHolder.remove = convertView.findViewById(R.id.remove);
+            viewHolder.itemTitle = view.findViewById(R.id.item_title);
+            viewHolder.itemArtist = view.findViewById(R.id.item_artist);
             Track track = playList.get(position);
             viewHolder.itemTitle.setText(track.getTitle());
             viewHolder.itemArtist.setText(track.getArtist());
-//            viewHolder.remove.setOnClickListener(v -> {
-//                player.remove(track);
-//                notifyDataSetChanged();
-//            });
             if (player.getCurrentTrackIndex() == position) {
                 Log.d(TAG, String.format("getView: position = %d, index = %d", position, player.getCurrentTrackIndex()));
-                // convertView.setBackgroundColor(Color.WHITE);
                 viewHolder.itemTitle.setTextColor(Color.RED);
                 viewHolder.itemArtist.setTextColor(Color.RED);
             }
-            return convertView;
+            return view;
         }
 
         public PlayListAdaptor setPlayList(List<Track> playList) {
@@ -341,7 +336,6 @@ public class PlayActivity extends AppCompatActivity implements View.OnClickListe
 
         private class ViewHolder {
             TextView itemTitle, itemArtist;
-            ImageButton remove;
         }
     }
 

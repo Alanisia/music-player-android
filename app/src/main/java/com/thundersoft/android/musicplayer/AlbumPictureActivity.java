@@ -67,8 +67,7 @@ public class AlbumPictureActivity extends AppCompatActivity implements View.OnTo
                     y1 = event.getRawY();
                     Log.d(TAG, "onTouch: x = " + x + "|y = " + y);
                 case MotionEvent.ACTION_MOVE:
-                    float x2 = event.getRawX();
-                    float y2 = event.getRawY();
+                    float x2 = event.getRawX(), y2 = event.getRawY();
                     float x3 = x2 - x1, y3 = y2 - y1;
 
                     int left = (int) (x2 - x);
@@ -163,10 +162,9 @@ public class AlbumPictureActivity extends AppCompatActivity implements View.OnTo
         imageView.setImageBitmap(bitmap);
         imageView.setId(R.id.album_picture);
         float scale = 1.25f;
-        if (in)
-            imageView.setLayoutParams(new ConstraintLayout.LayoutParams((int) (w * scale), (int) (h * scale)));
-        else
-            imageView.setLayoutParams(new ConstraintLayout.LayoutParams((int) (w / scale), (int) (h / scale)));
+        imageView.setLayoutParams(in
+                ? new ConstraintLayout.LayoutParams((int) (w * scale), (int) (h * scale))
+                : new ConstraintLayout.LayoutParams((int) (w / scale), (int) (h / scale)));
         Log.d(TAG, "resize: " + imageLocation);
         imageView.layout(imageLocation.l, imageLocation.t, imageLocation.r, imageLocation.b);
         layout.addView(imageView);
