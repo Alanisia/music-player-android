@@ -1,4 +1,4 @@
-package com.thundersoft.android.musicplayer.component;
+package com.thundersoft.android.musicplayer.view;
 
 import android.content.Context;
 import android.util.AttributeSet;

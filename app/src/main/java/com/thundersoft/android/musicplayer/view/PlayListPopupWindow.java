@@ -1,10 +1,9 @@
-package com.thundersoft.android.musicplayer.component;
+package com.thundersoft.android.musicplayer.view;
 
 import android.annotation.SuppressLint;
 import android.graphics.drawable.ColorDrawable;
 import android.view.Gravity;
 import android.view.View;
-import android.view.ViewGroup;
 import android.widget.PopupWindow;
 
 @SuppressLint("ClickableViewAccessibility")

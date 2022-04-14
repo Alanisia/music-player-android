@@ -19,7 +19,7 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
-    <com.thundersoft.android.musicplayer.component.MarqueeTextView
+    <com.thundersoft.android.musicplayer.view.MarqueeTextView
         android:id="@+id/play_title"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"

@@ -14,7 +14,7 @@
         android:layout_width="48dp"
         android:layout_height="48dp"/>
 
-    <com.thundersoft.android.musicplayer.component.MarqueeTextView
+    <com.thundersoft.android.musicplayer.view.MarqueeTextView
         android:id="@+id/track_title"
         android:textSize="20sp"
         app:layout_constraintTop_toTopOf="parent"

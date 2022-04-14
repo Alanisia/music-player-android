@@ -3,29 +3,22 @@ package com.thundersoft.android.musicplayer.player;
 import android.content.ContentUris;
 import android.content.Context;
 import android.database.Cursor;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.media.MediaMetadataRetriever;
 import android.net.Uri;
 import android.os.Build;
 import android.provider.MediaStore;
 import android.util.Log;
-import android.util.Size;
 
-import androidx.core.app.ActivityCompat;
+import androidx.annotation.RequiresApi;
 
 import com.thundersoft.android.musicplayer.util.Utils;
 
-import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
-import java.util.Objects;
 
 public final class TrackInfoReader {
     private static final String TAG = TrackInfoReader.class.getSimpleName();
 
+    @RequiresApi(api = Build.VERSION_CODES.R)
     public static List<Track> read(Context context) {
         Uri contentURI = Build.VERSION.SDK_INT >= Build.VERSION_CODES.R ?
                 MediaStore.Audio.Media.getContentUri(MediaStore.VOLUME_EXTERNAL) :
@@ -48,10 +41,7 @@ public final class TrackInfoReader {
 
             int id = cursor.getInt(cursor.getColumnIndexOrThrow(MediaStore.Audio.Media._ID));
 
-//            int albumId = cursor.getInt(cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.ALBUM_ID));
-//            Bitmap albumPicture = getAlbumArt(context, albumId);
-
-            Track track = new Track().setId(id) // .setImage(albumPicture)
+            Track track = new Track().setId(id)
                     .setPath(ContentUris.withAppendedId(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, id))
                     .setTitle(cursor.getString(cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.TITLE)))
                     .setArtist(cursor.getString(cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.ARTIST)))
@@ -62,17 +52,6 @@ public final class TrackInfoReader {
         cursor.close();
         return tracks;
     }
-
-    @Deprecated
-    private static Bitmap getAlbumArt(Context context, int albumId) {
-        Uri albumUri = ContentUris.withAppendedId(MediaStore.Audio.Albums.EXTERNAL_CONTENT_URI, albumId);
-        try {
-            return context.getContentResolver().loadThumbnail(albumUri, new Size(50, 50), null);
-        } catch (IOException e) {
-            return null;
-        }
-    }
-
 
     private static long getTrackMinutes(long millionSeconds) {
         return millionSeconds / 1000 / 60;

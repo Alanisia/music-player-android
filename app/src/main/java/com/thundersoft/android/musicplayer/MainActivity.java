@@ -128,9 +128,6 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
         viewHolder.lvTrackList.setAdapter(new TrackListAdaptor(this, R.layout.layout_track_item, tracks).setTracks(tracks));
         viewHolder.lvTrackList.setOnItemClickListener(this);
 
-//        viewHolder.etSearchTrack = findViewById(R.id.search_track);
-//        String keyword = viewHolder.etSearchTrack.getText().toString();
-
         viewHolder.clPlayingBottomNav = findViewById(R.id.playing_bottom_nav);
         viewHolder.clPlayingBottomNav.setOnClickListener(v ->
                 startActivityWithCurrentTrack(player.current(), Constants.ACTION_BOTTOM_INTENT));
@@ -199,7 +196,6 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
     }
 
     private static class ViewHolder {
-//        EditText etSearchTrack;
         ListView lvTrackList;
         ConstraintLayout clPlayingBottomNav;
         TextView tvPlayingTitle;

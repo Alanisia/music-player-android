@@ -27,7 +27,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
-import com.thundersoft.android.musicplayer.component.PlayListPopupWindow;
+import com.thundersoft.android.musicplayer.view.PlayListPopupWindow;
 import com.thundersoft.android.musicplayer.player.PlayMode;
 import com.thundersoft.android.musicplayer.player.Player;
 import com.thundersoft.android.musicplayer.player.Track;

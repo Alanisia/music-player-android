@@ -53,8 +53,4 @@ public final class Utils {
     public static String json(Object value, boolean pretty) {
         return pretty ? gsonPretty.toJson(value) : gson.toJson(value);
     }
-
-    public static Object fromJson(String json, Class<?> clazz) {
-        return gson.fromJson(json, clazz);
-    }
 }

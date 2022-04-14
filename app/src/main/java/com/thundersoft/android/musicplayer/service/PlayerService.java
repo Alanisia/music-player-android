@@ -18,7 +18,6 @@ import com.thundersoft.android.musicplayer.util.Constants;
 import java.io.IOException;
 
 public class PlayerService extends Service {
-    private static final String TAG = PlayerService.class.getSimpleName();
     private final Player player = Player.getInstance();
     private MediaPlayer mediaPlayer = new MediaPlayer();
 
@@ -45,7 +44,6 @@ public class PlayerService extends Service {
 
     public class PlayerBinder extends Binder {
         private Context context;
-        private Track current;
         private boolean initialized = false;
 
         public void play() {
@@ -57,7 +55,7 @@ public class PlayerService extends Service {
             initialized = true;
 
             try {
-                current = player.current();
+                Track current = player.current();
                 mediaPlayer.setDataSource(context, current.getPath());
                 mediaPlayer.prepare();
             } catch (IOException e) {
@@ -108,8 +106,6 @@ public class PlayerService extends Service {
 
         public void seekTo(int second) {
             mediaPlayer.seekTo(second);
-//            play();
-//            mediaPlayer.pause();
         }
 
         public void reset() {
@@ -124,10 +120,6 @@ public class PlayerService extends Service {
 
         public boolean isInitialized() {
             return initialized;
-        }
-
-        public Track getCurrent() {
-            return current;
         }
 
         public MediaPlayer getMediaPlayer() {
