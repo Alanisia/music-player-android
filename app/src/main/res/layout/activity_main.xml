@@ -15,6 +15,37 @@
         android:layout_height="0dp"/>
 
     <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <Button
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            android:id="@+id/prev_page"
+            android:text="上一页"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"/>
+
+        <TextView
+            android:id="@+id/pagination_tv"
+            android:text="/"
+            app:layout_constraintStart_toEndOf="@+id/prev_page"
+            app:layout_constraintEnd_toStartOf="@+id/next_page"
+            app:layout_constraintBaseline_toBaselineOf="@+id/prev_page"
+            app:layout_constraintTop_toTopOf="parent"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"/>
+
+        <Button
+            android:id="@+id/next_page"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            android:text="下一页"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"/>
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+    <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/playing_bottom_nav"
         android:layout_width="match_parent"
         android:layout_height="60dp">

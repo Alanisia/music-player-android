@@ -1,11 +1,13 @@
 package com.thundersoft.android.musicplayer;
 
 import android.Manifest;
+import android.annotation.SuppressLint;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.KeyEvent;
@@ -14,6 +16,8 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.Button;
+import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.ListView;
@@ -22,6 +26,8 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.annotation.RequiresApi;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.core.app.ActivityCompat;
@@ -33,10 +39,13 @@ import com.thundersoft.android.musicplayer.player.TrackInfoReader;
 import com.thundersoft.android.musicplayer.service.PlayerService;
 import com.thundersoft.android.musicplayer.service.PlayerServiceConnection;
 import com.thundersoft.android.musicplayer.util.Constants;
+import com.thundersoft.android.musicplayer.util.Pager;
 import com.thundersoft.android.musicplayer.util.Utils;
 
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
+@RequiresApi(api = Build.VERSION_CODES.R)
 public class MainActivity extends AppCompatActivity implements AdapterView.OnItemClickListener {
     private static final String TAG = MainActivity.class.getSimpleName();
     private static final int REQUEST_PERMISSION_CODE = 1;
@@ -45,7 +54,11 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
     private List<Track> tracks;
     private PlayerBroadcastReceiver receiver;
     private final ViewHolder viewHolder = new ViewHolder();
+    private Pager<Track> pager;
+    private int currentPage = 1, totalPage;
+    private List<Track> currentPageTracks;
 
+    // TODO: add pagination
     static class TrackListAdaptor extends ArrayAdapter<Track> {
         private List<Track> tracks;
         private final int resourceId;
@@ -86,6 +99,16 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
         }
     }
 
+    private void setPagination() {
+        TrackListAdaptor adaptor = (TrackListAdaptor) viewHolder.lvTrackList.getAdapter();
+        adaptor.clear();
+        adaptor.notifyDataSetChanged();
+        currentPageTracks = pager.paginate(currentPage);
+        viewHolder.lvTrackList.setAdapter(new TrackListAdaptor(this, R.layout.layout_track_item,
+                currentPageTracks).setTracks(currentPageTracks));
+        viewHolder.pagination.setText(pager.currentAndTotal(currentPage));
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -114,18 +137,23 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
 
     @Override
     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-        player.setPlayList(tracks);
+        currentPageTracks = pager.paginate(currentPage);
+        player.setPlayList(currentPageTracks);
         player.setCurrent(position);
-        Track track = tracks.get(position);
+        Track track = currentPageTracks.get(position);
         Log.d(TAG, "onItemClick: " + track);
         startActivityWithCurrentTrack(track, Constants.ACTION_LIST_ITEM_INTENT);
     }
 
     private void mainLogic() {
         tracks = TrackInfoReader.read(this);
+        pager = new Pager<>(tracks, 30);
+        this.totalPage = pager.getTotalPage();
+        currentPageTracks = pager.paginate(currentPage);
 
         viewHolder.lvTrackList = findViewById(R.id.track_list);
-        viewHolder.lvTrackList.setAdapter(new TrackListAdaptor(this, R.layout.layout_track_item, tracks).setTracks(tracks));
+        viewHolder.lvTrackList.setAdapter(new TrackListAdaptor(this, R.layout.layout_track_item,
+                currentPageTracks).setTracks(currentPageTracks));
         viewHolder.lvTrackList.setOnItemClickListener(this);
 
         viewHolder.clPlayingBottomNav = findViewById(R.id.playing_bottom_nav);
@@ -137,13 +165,46 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
 
         viewHolder.ibControl = findViewById(R.id.playing_control);
         setIbControlDrawable();
-
         viewHolder.ibControl.setOnClickListener(v -> {
             if (player.current() != null) {
                 serviceConnection.getBinder().control();
                 setIbControlDrawable();
             } else {
                 Toast.makeText(this, "No track in play list", Toast.LENGTH_SHORT).show();
+            }
+        });
+
+        // pagination
+        viewHolder.pagination = findViewById(R.id.pagination_tv);
+        viewHolder.pagination.setText(pager.currentAndTotal(currentPage));
+        viewHolder.pagination.setOnClickListener(v -> {
+            AlertDialog.Builder dialog = new AlertDialog.Builder(this);
+            String[] pages = new String[totalPage];
+            for (int i = 0; i < totalPage; i++)
+                pages[i] = String.valueOf(i + 1);
+            dialog.setTitle("选择页数");
+            AtomicInteger selected = new AtomicInteger(0);
+            dialog.setSingleChoiceItems(pages, 0, (dialog1, which) -> selected.set(which + 1));
+            dialog.setPositiveButton("确定", (dialog1, which) -> {
+                currentPage = selected.get();
+                setPagination();
+            });
+            dialog.show();
+        });
+
+        viewHolder.previousPage = findViewById(R.id.prev_page);
+        viewHolder.nextPage = findViewById(R.id.next_page);
+
+        viewHolder.previousPage.setOnClickListener(v -> {
+            if (currentPage > 1) {
+                currentPage--;
+                setPagination();
+            }
+        });
+        viewHolder.nextPage.setOnClickListener(v -> {
+            if (currentPage < totalPage) {
+                currentPage++;
+                setPagination();
             }
         });
 
@@ -200,6 +261,9 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
         ConstraintLayout clPlayingBottomNav;
         TextView tvPlayingTitle;
         ImageButton ibControl;
+        Button previousPage;
+        Button nextPage;
+        TextView pagination;
     }
 
     private class PlayerBroadcastReceiver extends BroadcastReceiver {
