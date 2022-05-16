@@ -36,6 +36,7 @@ import androidx.core.content.ContextCompat;
 import com.thundersoft.android.musicplayer.player.Player;
 import com.thundersoft.android.musicplayer.player.Track;
 import com.thundersoft.android.musicplayer.player.TrackInfoReader;
+import com.thundersoft.android.musicplayer.server.IPlayerAidlInterface;
 import com.thundersoft.android.musicplayer.service.PlayerService;
 import com.thundersoft.android.musicplayer.service.PlayerServiceConnection;
 import com.thundersoft.android.musicplayer.util.Constants;
@@ -51,14 +52,12 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
     private static final int REQUEST_PERMISSION_CODE = 1;
     private final Player player = Player.getInstance();
     private PlayerServiceConnection serviceConnection;
-    private List<Track> tracks;
     private PlayerBroadcastReceiver receiver;
     private final ViewHolder viewHolder = new ViewHolder();
     private Pager<Track> pager;
     private int currentPage = 1, totalPage;
     private List<Track> currentPageTracks;
 
-    // TODO: add pagination
     static class TrackListAdaptor extends ArrayAdapter<Track> {
         private List<Track> tracks;
         private final int resourceId;
@@ -146,7 +145,7 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
     }
 
     private void mainLogic() {
-        tracks = TrackInfoReader.read(this);
+        List<Track> tracks = TrackInfoReader.read(this);
         pager = new Pager<>(tracks, 30);
         this.totalPage = pager.getTotalPage();
         currentPageTracks = pager.paginate(currentPage);

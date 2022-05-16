@@ -5,7 +5,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.media.AudioAttributes;
 import android.media.MediaPlayer;
-import android.os.Binder;
 import android.os.IBinder;
 import android.widget.Toast;
 
@@ -13,6 +12,7 @@ import androidx.annotation.Nullable;
 
 import com.thundersoft.android.musicplayer.player.Player;
 import com.thundersoft.android.musicplayer.player.Track;
+import com.thundersoft.android.musicplayer.server.IPlayerAidlInterface;
 import com.thundersoft.android.musicplayer.util.Constants;
 
 import java.io.IOException;
@@ -20,6 +20,7 @@ import java.io.IOException;
 public class PlayerService extends Service {
     private final Player player = Player.getInstance();
     private MediaPlayer mediaPlayer = new MediaPlayer();
+    private final Context self = this;
 
     @Nullable
     @Override
@@ -42,10 +43,11 @@ public class PlayerService extends Service {
         super.onDestroy();
     }
 
-    public class PlayerBinder extends Binder {
-        private Context context;
+    public class PlayerBinder extends IPlayerAidlInterface.Stub {
+        private Context context = self;
         private boolean initialized = false;
 
+        @Override
         public void play() {
             mediaPlayer.setAudioAttributes(new AudioAttributes.
                     Builder().setContentType(AudioAttributes.CONTENT_TYPE_MUSIC).build());
@@ -73,6 +75,7 @@ public class PlayerService extends Service {
             });
         }
 
+        @Override
         public boolean control() {
             if (initialized) {
                 if (mediaPlayer.isPlaying()) {
@@ -91,6 +94,7 @@ public class PlayerService extends Service {
             }
         }
 
+        @Override
         public void next(boolean over) {
             if (over) player.nextOverPlaying();
             else player.next();
@@ -98,16 +102,19 @@ public class PlayerService extends Service {
             player.setPlaying(true);
         }
 
+        @Override
         public void previous() {
             player.previous();
             play();
             player.setPlaying(true);
         }
 
+        @Override
         public void seekTo(int second) {
             mediaPlayer.seekTo(second);
         }
 
+        @Override
         public void reset() {
             if (mediaPlayer.isPlaying()) mediaPlayer.stop();
             mediaPlayer.reset();

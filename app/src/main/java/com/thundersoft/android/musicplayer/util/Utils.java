@@ -1,6 +1,7 @@
 package com.thundersoft.android.musicplayer.util;
 
 import android.app.Service;
+import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
@@ -38,6 +39,14 @@ public final class Utils {
     public static void bindService(Context context, Class<? extends Service> serviceClass,
                                    ServiceConnection serviceConnection) {
         Intent serviceIntent = new Intent(context, serviceClass);
+        context.bindService(serviceIntent, serviceConnection, BIND_AUTO_CREATE);
+    }
+
+    public static void bindService(Context context, ServiceConnection serviceConnection,
+                                   String action, String packageName) {
+        Intent serviceIntent = new Intent();
+        serviceIntent.setAction(action);
+        serviceIntent.setPackage(packageName);
         context.bindService(serviceIntent, serviceConnection, BIND_AUTO_CREATE);
     }
 
