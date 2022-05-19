@@ -21,6 +21,7 @@ public class PlayerService extends Service {
     private final Player player = Player.getInstance();
     private MediaPlayer mediaPlayer = new MediaPlayer();
     private final Context self = this;
+    private PlayerNotification playerNotification;
 
     @Nullable
     @Override
@@ -31,6 +32,13 @@ public class PlayerService extends Service {
     @Override
     public void onCreate() {
         super.onCreate();
+
+        // TODO: initialize notification
+        playerNotification = new PlayerNotification(self);
+        playerNotification.initRemoteView();
+        playerNotification.registerBroadcast();
+        playerNotification.initNotification();
+        playerNotification.showNotification();
     }
 
     @Override
@@ -40,6 +48,8 @@ public class PlayerService extends Service {
             mediaPlayer.release();
             mediaPlayer = null;
         }
+        // TODO: unregister broadcast relative to notification
+        playerNotification.unregisterBroadcast();
         super.onDestroy();
     }
 
